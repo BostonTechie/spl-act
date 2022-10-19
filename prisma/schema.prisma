@@ -17,8 +17,8 @@ model SPL {
   From         String?        @map("From/To")
   Amount       Float?         @db.Real
   Balance      Float?         @db.Real
-  Price Float?         @db.Real
-  inUSD  Float?         @db.Real
+  Price        Float?         @db.Real
+  inUSD        Float?         @db.Real
   Created_Date DateTime?      @map("Created Date")
   Account      String?
   Index        Int?
@@ -39,7 +39,8 @@ model AccountingJE {
   Credit       Float?    @default(0) @db.Real
   CryptoDBid   Int
   Duration     String?
-  hive         SPL     @relation(fields: [CryptoDBid], references: [id])
+  Notes        String?
+  hive         SPL       @relation(fields: [CryptoDBid], references: [id])
 }
 
 model Ledger {
@@ -55,15 +56,15 @@ model Ledger {
 }
 
 model History_price {
-  id               Int      @id @unique @default(autoincrement())
+  id        Int       @id @unique @default(autoincrement())
   Asset     String?
-  Date        DateTime?
- Open Float? @default(0) @db.Real
- High  Float?@default(0) @db.Real
- Low  Float? @default(0) @db.Real
- Close Float? @default(0) @db.Real
- Adj_Close Float? @default(0) @db.Real
- Volume Float? @default(0) @db.Real
+  Date      DateTime?
+  Open      Float?    @default(0) @db.Real
+  High      Float?    @default(0) @db.Real
+  Low       Float?    @default(0) @db.Real
+  Close     Float?    @default(0) @db.Real
+  Adj_Close Float?    @default(0) @db.Real
+  Volume    Float?    @default(0) @db.Real
 }
 
 enum DLedger {
