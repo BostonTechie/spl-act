@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SPL {
+  id           Int            @id @unique @default(autoincrement())
+  Token        String?
+  Type         String?
+  From         String?        @map("From/To")
+  Amount       Float?         @db.Real
+  Balance      Float?         @db.Real
+  Price Float?         @db.Real
+  inUSD  Float?         @db.Real
+  Created_Date DateTime?      @map("Created Date")
+  Account      String?
+  Index        Int?
+  accountingJE AccountingJE[]
+}
+
+model AccountingJE {
+  id           Int       @id @unique @default(autoincrement())
+  Entity       String?
+  Wallet       String?
+  Counterparty String?
+  Asset        String?
+  Proceed_Date DateTime?
+  Ledger_Type1 String?
+  Ledger_Type2 String?
+  Ledger_Name  String?
+  Debit        Float?    @default(0) @db.Real
+  Credit       Float?    @default(0) @db.Real
+  CryptoDBid   Int
+  Duration     String?
+  hive         SPL     @relation(fields: [CryptoDBid], references: [id])
+}
+
+model Ledger {
+  id               Int      @id @unique @default(autoincrement())
+  Transaction_Type String?  @map("Transaction Type")
+  Dledger          DLedger?
+  DLedger_SType    String?  @default("Liquid")
+  Cledger          CLedger?
+  CLedger_SType    String?  @default("Deferred Revenue")
+  Realized         Boolean? @default(false)
+  Sale             Sale?
+  Notes            String?
+}
+
+model History_price {
+  id               Int      @id @unique @default(autoincrement())
+  Asset     String?
+  Date        DateTime?
+ Open Float? @default(0) @db.Real
+ High  Float?@default(0) @db.Real
+ Low  Float? @default(0) @db.Real
+ Close Float? @default(0) @db.Real
+ Adj_Close Float? @default(0) @db.Real
+ Volume Float? @default(0) @db.Real
+}
+
+enum DLedger {
+  Asset
+  Liability
+  Equity
+  Revenue
+  Expense
+}
+
+enum CLedger {
+  Asset
+  Liability
+  Equity
+  Revenue
+  Expense
+}
+
+enum Sale {
+  Buy
+  Sale
+}
