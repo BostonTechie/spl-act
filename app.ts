@@ -1,4 +1,3 @@
-import { SPL } from "@prisma/client";
 import prisma from "./prisma/client";
 
 async function main() {
@@ -19,9 +18,7 @@ async function main() {
   //   },
   // });
 
-  console.log(firstDecPrice);
-
-  const updateSPLwithFindPrice = await prisma.sPL.findMany({
+  const updateSPLwithFindPriceDEC = await prisma.sPL.findMany({
     where: {
       Token: "DEC",
       Created_Date: {
@@ -35,38 +32,35 @@ async function main() {
     take: 1,
   });
 
-  console.log(updateSPLwithFindPrice);
+  for (let element of updateSPLwithFindPriceDEC) {
+    let strmonth = "";
 
-  // for (let element of findAllJeCoding) {
-  //   let strmonth = "";
-  //   if (element.Token === "DEC" && element.Created_Date <= firstDecPrice) {
+    /*this if controls logic for findinf prices of the DEC token that I have found in yahoo finance, note all data is after (8/10/2020) https://finance.yahoo.com/quote/DEC1-USD/history?period1=1594598400&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true*/
 
-  //     /*this if controls logic for date before the first close price of the DEC token that I have in yahoo finance (8/10/2020) https://finance.yahoo.com/quote/DEC1-USD/history?period1=1594598400&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true*/
+    let elementDate = element.Created_Date;
+    let date = elementDate.getUTCDate();
+    let month = elementDate.getUTCMonth();
+    let year = elementDate.getUTCFullYear();
 
-  //     tokenPrice = 0.000507;
-  //   } else {
-  //     let elementDate = element.Created_Date;
-  //     let date = elementDate.getUTCDate();
-  //     let month = elementDate.getUTCMonth();
-  //     let year = elementDate.getUTCFullYear();
+    if (month < 8) {
+      strmonth = "0" + month.toString();
+    } else if (month === 9) {
+      strmonth = "10";
+    } else strmonth = month.toString();
 
-  //     if (month < 8) {
-  //       strmonth = "0" + month.toString();
-  //     } else if (month === 9) {
-  //       strmonth = "10";
-  //     } else strmonth = month.toString();
+    let dateStr = year + "-" + strmonth + "-" + date + "T00:00:00+00:00";
 
-  //     let dateStr = year + "-" + strmonth + "-" + date + "T00:00:00+00:00";
+    const lookupPricebyDate = await prisma.history_price.findMany({
+      where: {
+        Date: dateStr,
+      },
+      select: {
+        Close: true,
+      },
+    });
 
-  //     const lookupPricebyDate = await prisma.history_price.findMany({
-  //       where: {
-  //         Date: dateStr,
-  //       },
-  //     });
-
-  //     console.log(element, lookupPricebyDate);
-  //   }
-  // }
+    console.log(element, updateSPLwithFindPriceDEC, dateStr, lookupPricebyDate);
+  }
 }
 ////----end of main function---------------------------------------
 
