@@ -2,25 +2,25 @@ import prisma from "./prisma/client";
 
 async function main() {
   // I have data that begins before my historical data For DEC token i declare a token price so I can define it as a fixed number later (8/10/2020)
-  let firstDecPrice = new Date(2021, 6, 26);
+  let firstDecPrice = new Date(2020, 7, 10);
 
   /* i update the prices for all tranactions that I have no data for below, this number or assumption could be wrong talk to Jesse */
 
   // const updateOldSPLwithDefaultPrice = await prisma.sPL.updateMany({
   //   where: {
-  //     Token: "SPS",
+  //     Token: "DEC",
   //     Created_Date: {
   //       lte: firstDecPrice,
   //     },
   //   },
   //   data: {
-  //     Price: 0.246423,
+  //     Price: 0.000507,
   //   },
   // });
 
   const updateSPLwithFindPriceDEC = await prisma.sPL.findMany({
     where: {
-      Token: "SPS",
+      Token: "DEC",
       Created_Date: {
         gt: firstDecPrice,
       },
@@ -72,7 +72,7 @@ async function main() {
 
     const lookupPricebyDate = await prisma.history_price.findMany({
       where: {
-        Asset: "SPS",
+        Asset: "DEC",
         Date: dateStr,
       },
       select: {
@@ -82,7 +82,7 @@ async function main() {
       },
     });
 
-    /*loop through all the elements in this array updateSPLwithFindPriceDEC who's purpose is to find all the data that will have price data that I can find and update the data line with the closing price for that day */
+    /*lopo through all the elements in this array updateSPLwithFindPriceDEC who's purpose is to find all the data that will have price data that I can find and update the data line with the closing price for that day */
 
     const updateSPLwithFindPriceDEC = await prisma.sPL.update({
       where: {
