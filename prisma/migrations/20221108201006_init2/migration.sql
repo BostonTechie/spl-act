@@ -20,6 +20,10 @@ CREATE TABLE "SPL" (
     "Created Date" TIMESTAMP(3),
     "Account" TEXT,
     "Index" INTEGER,
+    "USD" REAL,
+    "Buy/Sell" TEXT,
+    "Internal?" TEXT,
+    "Cumulative_Buy" TEXT,
 
     CONSTRAINT "SPL_pkey" PRIMARY KEY ("id")
 );
@@ -60,7 +64,7 @@ CREATE TABLE "Ledger" (
 );
 
 -- CreateTable
-CREATE TABLE "History_price" (
+CREATE TABLE "History_price_DEC" (
     "id" SERIAL NOT NULL,
     "Asset" TEXT,
     "Date" TIMESTAMP(3),
@@ -71,7 +75,22 @@ CREATE TABLE "History_price" (
     "Adj_Close" REAL DEFAULT 0,
     "Volume" REAL DEFAULT 0,
 
-    CONSTRAINT "History_price_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "History_price_DEC_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "History_price_SPS" (
+    "id" SERIAL NOT NULL,
+    "Asset" TEXT,
+    "Date" TIMESTAMP(3),
+    "Open" REAL DEFAULT 0,
+    "High" REAL DEFAULT 0,
+    "Low" REAL DEFAULT 0,
+    "Close" REAL DEFAULT 0,
+    "Adj_Close" REAL DEFAULT 0,
+    "Volume" REAL DEFAULT 0,
+
+    CONSTRAINT "History_price_SPS_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -84,7 +103,10 @@ CREATE UNIQUE INDEX "AccountingJE_id_key" ON "AccountingJE"("id");
 CREATE UNIQUE INDEX "Ledger_id_key" ON "Ledger"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "History_price_id_key" ON "History_price"("id");
+CREATE UNIQUE INDEX "History_price_DEC_id_key" ON "History_price_DEC"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "History_price_SPS_id_key" ON "History_price_SPS"("id");
 
 -- AddForeignKey
 ALTER TABLE "AccountingJE" ADD CONSTRAINT "AccountingJE_CryptoDBid_fkey" FOREIGN KEY ("CryptoDBid") REFERENCES "SPL"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

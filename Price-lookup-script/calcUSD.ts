@@ -1,4 +1,4 @@
-import prisma from "./prisma/client";
+import prisma from "../prisma/client";
 
 async function main() {
   // I have data that begins before my historical data For DEC token i declare a token price so I can define it as a fixed number later (8/10/2020)
@@ -18,6 +18,7 @@ async function main() {
   //   },
   // });
 
+  //this code section updates the prices for any date after the first price date.. Meaning A price exist and can be found online, before (8/10/2020) no data seems to exist
   const updateSPLwithFindPriceDEC = await prisma.sPL.findMany({
     where: {
       Token: "DEC",
