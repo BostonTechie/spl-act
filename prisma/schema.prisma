@@ -25,7 +25,7 @@ model SPL {
   USD            Float?         @db.Real
   Buy            String?        @map("Buy/Sell")
   Internal       String?        @map("Internal?")
-  Cumulative_Buy String?
+  Cumulative_Buy Float?         @db.Real
   accountingJE   AccountingJE[]
 }
 
