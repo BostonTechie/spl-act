@@ -4,10 +4,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "calcdec": "nodemon calcDecLookupPrice.ts",
-    "calcsps": "nodemon calcSPSLookupPrice.ts",
-    "calcfifo": "nodemon calcFifo.ts",
-    "calcusd": "nodemon calcUSD.ts"
+    "calcdec": "nodemon calc1DecLookupPrice.ts",
+    "prompt": "nodemon calcPrompts.ts",
+    "calcsps": "nodemon calc2SPSLookupPrice.ts",
+    "calcusd": "nodemon calc3USD.ts",
+    "calcfifo": "nodemon calc4Fifo.ts"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,8 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@prisma/client": "^4.4.0"
+    "@prisma/client": "^4.4.0",
+    "enquirer": "^2.3.6"
   },
   "description": ""
 }
