@@ -15,17 +15,35 @@ CREATE TABLE "SPL" (
     "From/To" TEXT,
     "Amount" REAL,
     "Balance" REAL,
-    "Price" REAL,
-    "inUSD" REAL,
     "Created Date" TIMESTAMP(3),
     "Account" TEXT,
     "Index" INTEGER,
-    "USD" REAL,
+    "Price" REAL,
+    "inUSD" REAL,
     "Buy/Sell" TEXT,
-    "Internal?" TEXT,
-    "Cumulative_Buy" TEXT,
+    "Internal/External" TEXT,
+    "Cumulative_Buy" REAL,
+    "Prev_Cumulative_Buy" REAL,
+    "Cumulative_Sell" REAL,
+    "Prev_Cumulative_Sell" REAL,
 
     CONSTRAINT "SPL_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Listing_Account" (
+    "id" SERIAL NOT NULL,
+    "Account" TEXT,
+
+    CONSTRAINT "Listing_Account_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Listing_Token" (
+    "id" SERIAL NOT NULL,
+    "Token" TEXT,
+
+    CONSTRAINT "Listing_Token_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -95,6 +113,12 @@ CREATE TABLE "History_price_SPS" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SPL_id_key" ON "SPL"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Listing_Account_id_key" ON "Listing_Account"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Listing_Token_id_key" ON "Listing_Token"("id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "AccountingJE_id_key" ON "AccountingJE"("id");

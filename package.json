@@ -4,8 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "calcapp": "nodemon app.ts",
-    "calcfifo": "nodemon Fifo.ts"
+    "calcdec": "nodemon calcDecLookupPrice.ts",
+    "calcsps": "nodemon calcSPSLookupPrice.ts",
+    "calcfifo": "nodemon calcFifo.ts"
   },
   "keywords": [],
   "author": "",

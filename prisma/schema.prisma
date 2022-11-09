@@ -11,22 +11,34 @@ datasource db {
 }
 
 model SPL {
-  id             Int            @id @unique @default(autoincrement())
-  Token          String?
-  Type           String?
-  From           String?        @map("From/To")
-  Amount         Float?         @db.Real
-  Balance        Float?         @db.Real
-  Price          Float?         @db.Real
-  inUSD          Float?         @db.Real
-  Created_Date   DateTime?      @map("Created Date")
-  Account        String?
-  Index          Int?
-  USD            Float?         @db.Real
-  Buy            String?        @map("Buy/Sell")
-  Internal       String?        @map("Internal?")
-  Cumulative_Buy Float?         @db.Real
-  accountingJE   AccountingJE[]
+  id                   Int            @id @unique @default(autoincrement())
+  Token                String?
+  Type                 String?
+  From                 String?        @map("From/To")
+  Amount               Float?         @db.Real
+  Balance              Float?         @db.Real
+  Created_Date         DateTime?      @map("Created Date")
+  Account              String?
+  Index                Int?
+  Price                Float?         @db.Real
+  inUSD                Float?         @db.Real
+  Buy_or_Sell          String?        @map("Buy/Sell")
+  Internal_or_External String?        @map("Internal/External")
+  Cumulative_Buy       Float?         @db.Real
+  Prev_Cumulative_Buy  Float?         @db.Real
+  Cumulative_Sell      Float?         @db.Real
+  Prev_Cumulative_Sell Float?         @db.Real
+  accountingJE         AccountingJE[]
+}
+
+model Listing_Account {
+  id      Int     @id @unique @default(autoincrement())
+  Account String?
+}
+
+model Listing_Token {
+  id    Int     @id @unique @default(autoincrement())
+  Token String?
 }
 
 model AccountingJE {

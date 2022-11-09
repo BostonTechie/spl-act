@@ -1,4 +1,4 @@
-import prisma from "../prisma/client";
+import prisma from "./prisma/client";
 
 async function main() {
   // I have data that begins before my historical data For DEC token i declare a token price so I can define it as a fixed number later (8/10/2020)
