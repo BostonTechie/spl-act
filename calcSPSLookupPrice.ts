@@ -1,4 +1,4 @@
-import prisma from "../prisma/client";
+import prisma from "./prisma/client";
 
 async function main() {
   // I have data that begins before my historical data For SPS token i declar a token price so I can define it as a fixed number later (7/26/2021)
@@ -36,7 +36,7 @@ async function main() {
     let strmonth = "";
     let strDate = "";
 
-    /*this if controls logic for findinf prices of the SPS token that I have found in yahoo finance, note all data is after (7/26/2021) https://finance.yahoo.com/quote/SPS-USD/history?period1=1508284800&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true
+    /*this if controls logic for findinf prices of the SPS token that I have found in yahoo finance, note all data is after (7/26/2021) https://finance.yahoo.com/quote/SPS-USD/history?period1=1508284800&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true */
 
     let elementDate = element.Created_Date;
     let date = elementDate.getUTCDate();
@@ -70,7 +70,7 @@ async function main() {
 
     let dateStr = year + "-" + strmonth + "-" + strDate + "T00:00:00+00:00";
 
-    const lookupPricebyDate = await prisma.history_price.findMany({
+    const lookupPricebyDate = await prisma.history_price_SPS.findMany({
       where: {
         Asset: "SPS",
         Date: dateStr,

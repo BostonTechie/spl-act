@@ -1,22 +1,46 @@
-import prisma from "../prisma/client";
+import prisma from "./prisma/client";
 
 async function main() {
+  //the following code says that anything that is net in is a "buy", out is a "sell" used to detemine FIFO realized gains/loss calculation
+
+  const updateBuy = await prisma.sPL.updateMany({
+    where: {
+      Amount: {
+        gt: 0,
+      },
+    },
+    data: {
+      Buy_or_Sell: "Buy",
+    },
+  });
+
+  const updateSell = await prisma.sPL.updateMany({
+    where: {
+      Amount: {
+        lte: 0,
+      },
+    },
+    data: {
+      Buy_or_Sell: "Sell",
+    },
+  });
+
   // I have data that begins before my historical data For DEC token i declare a token price so I can define it as a fixed number later (8/10/2020)
   let firstDecPrice = new Date(2020, 7, 10);
 
   /* i update the prices for all tranactions that I have no data for below, this number or assumption could be wrong talk to Jesse */
 
-  // const updateOldSPLwithDefaultPrice = await prisma.sPL.updateMany({
-  //   where: {
-  //     Token: "DEC",
-  //     Created_Date: {
-  //       lte: firstDecPrice,
-  //     },
-  //   },
-  //   data: {
-  //     Price: 0.000507,
-  //   },
-  // });
+  const updateOldSPLwithDefaultPrice = await prisma.sPL.updateMany({
+    where: {
+      Token: "DEC",
+      Created_Date: {
+        lte: firstDecPrice,
+      },
+    },
+    data: {
+      Price: 0.000507,
+    },
+  });
 
   //this code section updates the prices for any date after the first price date.. Meaning A price exist and can be found online, before (8/10/2020) no data seems to exist
   const updateSPLwithFindPriceDEC = await prisma.sPL.findMany({
@@ -71,7 +95,7 @@ async function main() {
 
     let dateStr = year + "-" + strmonth + "-" + strDate + "T00:00:00+00:00";
 
-    const lookupPricebyDate = await prisma.history_price.findMany({
+    const lookupPricebyDate = await prisma.history_price_DEC.findMany({
       where: {
         Asset: "DEC",
         Date: dateStr,
@@ -83,7 +107,7 @@ async function main() {
       },
     });
 
-    /*lopo through all the elements in this array updateSPLwithFindPriceDEC who's purpose is to find all the data that will have price data that I can find and update the data line with the closing price for that day */
+    /*loop through all the elements in this array updateSPLwithFindPriceDEC who's purpose is to find all the data that will have price data that I can find and update the data line with the closing price for that day */
 
     const updateSPLwithFindPriceDEC = await prisma.sPL.update({
       where: {

@@ -1,41 +1,6 @@
 import prisma from "./prisma/client";
 
-/// run order 1
-async function createDistinctTables() {
-  //this function creates a table of SPL accounts that can be iterated over when trying to calculate Fifo, it also creates a table of distinct tokens
-
-  const distinctAccounts = await prisma.sPL.findMany({
-    select: {
-      Account: true,
-    },
-    distinct: ["Account"],
-  });
-
-  const createAccountsTable = await prisma.listing_Account.createMany({
-    data: distinctAccounts,
-  });
-
-  const distinctTokens = await prisma.sPL.findMany({
-    select: {
-      Token: true,
-    },
-    distinct: ["Token"],
-  });
-
-  const createTokenTable = await prisma.listing_Token.createMany({
-    data: distinctTokens,
-  });
-
-  console.log(
-    "unique accounts,",
-    createAccountsTable,
-    " unique tokens ",
-    createTokenTable
-  );
-}
-////----end of function------------------------------------------------
-
-/// run order 2 run after earlier sequence completes
+/// run after calcUSD and after lookupprices
 async function sumOfBuyfromAccounts() {
   const findAllAccounts = await prisma.listing_Account.findMany({
     select: {
