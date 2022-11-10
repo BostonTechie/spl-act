@@ -1,3 +1,17 @@
+const prompt = new MultiSelect({
+  name: "value",
+  message: "What would you like to do? (press number)",
+  limit: 7,
+  choices: [
+    {
+      name: "0. Run a column script(buy/sell, internal/external)",
+      value: "column",
+    },
+    { name: "1. Truncate a table", value: "truncate" },
+  ],
+});
+
+
 import prisma from "./prisma/client";
 
 async function main() {

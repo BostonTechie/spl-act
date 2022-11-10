@@ -1,6 +1,6 @@
 import prisma from "../prisma/client";
 
-//updates the buy or sell column in the SPL database for FIFO calc purposes
+//gives a listing of tables that currently exist in the current database configured in the .ENV file
 export async function tableNames() {
   const tablenames = await prisma.$queryRaw<
     Array<{ tablename: string }>

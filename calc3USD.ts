@@ -3,31 +3,50 @@ const { Confirm } = require("enquirer");
 import { deleteTokenTable, deleteAccountTable } from "./functions/deleteTable";
 
 async function main() {
+  //The Prompt funtion is designed to bring a user through a series of questions in the right order so that they calc excute, update, delete table in the proper order of operations
+
+  const deletePrompt = new Confirm({
+    delete: "question",
+    message: "Would you like to Truncate the Token table?",
+  });
+
+  deletePrompt.run().then(function (answer) {
+    if (answer === true) {
+      deleteTokenTable();
+    } else console.log(answer, "fail");
+  });
+
   // const distinctAccounts = await prisma.sPL.findMany({
   //   select: {
   //     Account: true,
   //   },
   //   distinct: ["Account"],
   // });
+
   // // const createAccountsTable = await prisma.listing_Account.createMany({
   // //   data: distinctAccounts,
   // // });
+
   // // const distinctTokens = await prisma.sPL.findMany({
   // //   select: {
   // //     Token: true,
   // //   },
   // //   distinct: ["Token"],
   // // });
+
   // // const createTokenTable = await prisma.listing_Token.createMany({
   // //   data: distinctTokens,
   // // });
+
   // // console.log(
   // //   "unique accounts,",
   // //   createAccountsTable,
   // //   " unique tokens ",
   // //   createTokenTable
   // // );
+
   // // Calculate the USD equivalent price of the token, must be run after calcDeclookup, calcSPSlookup.
+
   // const calcUSD = await prisma.sPL.findMany({
   //   select: {
   //     id: true,
@@ -35,9 +54,12 @@ async function main() {
   //     Price: true,
   //   },
   // });
+
   // let usdOfElement = 0;
+
   // for (let element of calcUSD) {
   //   usdOfElement = element.Amount * element.Price;
+
   //   await prisma.sPL.update({
   //     where: {
   //       id: element.id,
@@ -47,12 +69,15 @@ async function main() {
   //     },
   //   });
   // }
+
   // console.log("calculate of USD complete");
+
   // const findInternalTransactions = await prisma.listing_Account.findMany({
   //   select: {
   //     Account: true,
   //   },
   // });
+
   // for (let element of findInternalTransactions) {
   //   await prisma.sPL.updateMany({
   //     where: {
@@ -63,6 +88,7 @@ async function main() {
   //     },
   //   });
   // }
+
   // await prisma.sPL.updateMany({
   //   where: {
   //     NOT: {

@@ -1,42 +1,26 @@
-import prisma from "./prisma/client";
-const { Confirm } = require("enquirer");
-import { deleteTokenTable, deleteAccountTable } from "./functions/deleteTable";
-import { tableNames } from "./functions/tableNames";
+const { NumberPrompt } = require("enquirer");
+import { columnCalcsFunc } from "./functions/columnCalcs";
 
-async function main() {
+export async function mainPrompt() {
   //The Prompt funtion is designed to bring a user through a series of questions in the right order so that they calc excute, update, delete table in the proper order of operations
 
-  //Would the user like to update find and update the price history for the transactions imported into the database?
-
-  const findHistoryPrices = new Confirm({
-    delete: "question",
-    message:
-      "In order for any scripts to run properly at a minimum the history of the crypto transactions must be imported into the SPL table, addtionally, the price history of the various tokens must be imported into their respective tables...continue? (y/N) ",
+  const prompt = new NumberPrompt({
+    name: "number",
+    message: "Please enter a number",
   });
 
-  findHistoryPrices.run().then(function (answer) {
-    if (answer === true) {
-      tableNames();
-    } else console.log(answer, "fail");
-  });
-
-  const deletePrompt = new Confirm({
-    delete: "question",
-    message: "Would you like to Truncate the Token table?",
-  });
-
-  deletePrompt.run().then(function (answer) {
-    if (answer === true) {
-      deleteTokenTable();
-    } else console.log(answer, "fail");
+  console.log("Please enter one of the following options");
+  console.log("0...column calculation scripts");
+  console.log("1...truncate table");
+  prompt.run().then(function (answer) {
+    if (answer === 0) {
+      columnCalcsFunc();
+    }
   });
 }
+////----end of mainPrompt function---------------------------------------
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => {
-    prisma.$disconnect;
-  });
+mainPrompt().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
