@@ -1,26 +1,29 @@
 const { NumberPrompt } = require("enquirer");
-import { columnCalcsFunc } from "./functions/columnCalcs";
+import { columnPrompt } from "./functions/columnFunctions";
+import { tablePrompt } from "./functions/tableFunctions";
 
-export async function mainPrompt() {
+export function mainPrompt() {
   //The Prompt funtion is designed to bring a user through a series of questions in the right order so that they calc excute, update, delete table in the proper order of operations
+
+  console.clear();
+  console.log("Please enter the number for your selection");
+  console.log("0...Column prompts");
+  console.log("1...Table prompts");
 
   const prompt = new NumberPrompt({
     name: "number",
     message: "Please enter a number",
   });
 
-  console.log("Please enter one of the following options");
-  console.log("0...column calculation scripts");
-  console.log("1...truncate table");
   prompt.run().then(function (answer) {
     if (answer === 0) {
-      columnCalcsFunc();
+      columnPrompt();
+    }
+    if (answer === 1) {
+      tablePrompt();
     }
   });
 }
 ////----end of mainPrompt function---------------------------------------
 
-mainPrompt().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+mainPrompt();

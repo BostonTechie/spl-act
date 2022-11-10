@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "calcdec": "nodemon calc1DecLookupPrice.ts",
-    "prompt": "nodemon calcPrompts.ts",
+    "prompt": "nodemon mainPrompts.ts",
     "calcsps": "nodemon calc2SPSLookupPrice.ts",
     "calcusd": "nodemon calc3USD.ts",
     "calcfifo": "nodemon calc4Fifo.ts"
