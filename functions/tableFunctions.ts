@@ -10,6 +10,7 @@ export function tablePrompt() {
     message: "Please enter the number for your selection",
   });
 
+  answer = null;
   console.log("Please enter one of the following options");
   console.log("0...Truncate distinct tokens.. table name: 'Listing_Token' ");
   console.log("1...Truncate distinct accounts.. table name: 'Listing_Account'");
@@ -28,12 +29,12 @@ export function tablePrompt() {
     }
     if (answer === 2) {
       answer = null;
-      deleteTokenTable();
+      deleteTokenTable().then;
       generateListingToken();
     }
     if (answer === 3) {
       answer = null;
-      deleteAccountTable();
+      deleteAccountTable().then;
       generateListingAccount();
     }
     if (answer === 4) {
