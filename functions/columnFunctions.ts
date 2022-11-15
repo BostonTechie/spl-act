@@ -12,6 +12,8 @@ export function columnPrompt() {
   console.log("Please enter one of the following options");
   console.log("0...Update the Buy/Sell Column");
   console.log("1...Update the Internal / External Column");
+  console.log("2...Lookup DEC prices");
+  console.log("3...Lookup SPS prices");
   console.log("9...back");
   prompt.run().then(function (answer) {
     if (answer === 0) {
@@ -19,6 +21,9 @@ export function columnPrompt() {
     }
     if (answer === 1) {
       internalExternalColumn();
+    }
+    if (answer === 2) {
+      lookupDECPriceHistory();
     }
     if (answer === 9) {
       mainPrompt();
@@ -91,6 +96,7 @@ async function internalExternalColumn() {
 }
 
 async function lookupDECPriceHistory() {
+  console.log("🌟🌟🌟 starting lookup of DEC prices");
   /*
     this function place the price of a token into the appropriate line 
     for a given Crypto transation on the SPL table,
@@ -103,6 +109,7 @@ async function lookupDECPriceHistory() {
     For DEC token i declare a fixed number later, based on the earilest date
     that I have data for (from yahoo) (8/10/2020)
  */
+
   let firstDecPrice = new Date(2020, 7, 10);
 
   /*
@@ -111,7 +118,7 @@ async function lookupDECPriceHistory() {
    this number or assumption could be wrong talk to Jesse 
   */
 
-  const updateOldSPLwithDefaultPrice = await prisma.sPL.updateMany({
+  await prisma.sPL.updateMany({
     where: {
       Token: "DEC",
       Created_Date: {
@@ -143,7 +150,13 @@ async function lookupDECPriceHistory() {
     let strmonth = "";
     let strDate = "";
 
-    /*this if controls logic for findinf prices of the DEC token that I have found in yahoo finance, note all data is after (8/10/2020) https://finance.yahoo.com/quote/DEC1-USD/history?period1=1594598400&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true*/
+    /*
+     this if controls logic for findinf prices of the DEC
+      token that I have found in yahoo finance, note all data is after
+       (8/10/2020)
+        https://finance.yahoo.com/quote/DEC1-USD/history?period1=1594598400&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true
+
+      */
 
     let elementDate = element.Created_Date;
     let date = elementDate.getUTCDate();
@@ -189,9 +202,14 @@ async function lookupDECPriceHistory() {
       },
     });
 
-    /*loop through all the elements in this array updateSPLwithFindPriceDEC who's purpose is to find all the data that will have price data that I can find and update the data line with the closing price for that day */
+    /*
+    loop through all the elements in this array
+    updateSPLwithFindPriceDEC who's purpose is to find all 
+    the data that will have price data that I can find and 
+    update the data line with the closing price for that day 
+    */
 
-    const updateSPLwithFindPriceDEC = await prisma.sPL.update({
+    await prisma.sPL.update({
       where: {
         id: element.id,
       },
@@ -200,4 +218,5 @@ async function lookupDECPriceHistory() {
       },
     });
   }
+  console.log("👍👍👍 DEC lookup complete");
 }
