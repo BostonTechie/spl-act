@@ -1,14 +1,23 @@
 const { NumberPrompt } = require("enquirer");
 import { columnPrompt } from "./functions/columnFunctions";
 import { tablePrompt } from "./functions/tableFunctions";
+import { fifoPrompt } from "./functions/fifoFunctions";
 
 export function mainPrompt() {
-  //The Prompt funtion is designed to bring a user through a series of questions in the right order so that they calc excute, update, delete table in the proper order of operations
+  /*
+  The Prompt funtion is designed to bring a user 
+  through a series of questions in the right order lower
+  numbered prompts must be complete before higher number
+  prompts (0 before 1)
+   so that they calc excute, update, delete table in the proper 
+   order of operations
+  */
 
   console.clear();
   console.log("Please enter the number for your selection");
   console.log("0...Column prompts");
   console.log("1...Table prompts");
+  console.log("2...FIFO prompts");
 
   const prompt = new NumberPrompt({
     name: "number",
@@ -21,6 +30,9 @@ export function mainPrompt() {
     }
     if (answer === 1) {
       tablePrompt();
+    }
+    if (answer === 2) {
+      fifoPrompt();
     }
   });
 }
