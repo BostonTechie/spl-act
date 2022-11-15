@@ -14,21 +14,38 @@ export function columnPrompt() {
   console.log("1...Update the Internal / External Column");
   console.log("2...Lookup DEC prices");
   console.log("3...Lookup SPS prices");
+  console.log("4...All functions");
   console.log("9...back");
 
   prompt.run().then(function (answer) {
     if (answer === 0) {
+      answer = null;
       updateBuySellColumn();
     }
     if (answer === 1) {
+      answer = null;
       internalExternalColumn();
     }
     if (answer === 2) {
+      answer = null;
       lookupDECPriceHistory();
     }
     if (answer === 3) {
+      answer = null;
       lookupSPSPriceHistory();
     }
+    if (answer === 3) {
+      answer = null;
+      lookupSPSPriceHistory();
+    }
+    if (answer === 4) {
+      answer = null;
+      updateBuySellColumn();
+      internalExternalColumn();
+      lookupDECPriceHistory();
+      lookupSPSPriceHistory();
+    }
+
     if (answer === 9) {
       mainPrompt();
     }
@@ -66,8 +83,13 @@ async function updateBuySellColumn() {
 }
 
 async function internalExternalColumn() {
-  //updates the internal/external column in the SPL database for FIFO calc purposes if the to / from column === (any account name) in account column, then it is an internal transaction otherwise external
-  console.log("🌟🌟🌟 starting internal/external script");
+  /*
+    generate table that lists all of the distinct 
+    accounts and put into the "Listing_Account" 
+    table in the database, which is used to determine what
+    is internal vs. external...see columnFunctions.ts
+  */
+
   const findInternalTransactions = await prisma.listing_Account.findMany({
     select: {
       Account: true,
@@ -83,18 +105,27 @@ async function internalExternalColumn() {
         Internal_or_External: "Internal",
       },
     });
-  }
 
-  await prisma.sPL.updateMany({
-    where: {
-      NOT: {
-        Internal_or_External: "Internal",
+    await prisma.sPL.updateMany({
+      where: {
+        NOT: {
+          From: element.Account,
+        },
       },
-    },
-    data: {
-      Internal_or_External: "External",
-    },
-  });
+      data: {
+        Internal_or_External: "External",
+      },
+    });
+
+    await prisma.sPL.updateMany({
+      where: {
+        From: null,
+      },
+      data: {
+        Internal_or_External: "External",
+      },
+    });
+  }
   console.log("👍👍👍 internal/external column complete");
   columnPrompt();
 }
@@ -237,9 +268,10 @@ async function lookupDECPriceHistory() {
       Price: true,
     },
   });
-  let usdOfElement = 0;
+
+  let usdOfElement = 0.0;
   for (let element of calcUSD) {
-    usdOfElement = element.Amount * element.Price;
+    usdOfElement = Number(element.Amount) * Number(element.Price);
     await prisma.sPL.update({
       where: {
         id: element.id,
@@ -373,9 +405,9 @@ async function lookupSPSPriceHistory() {
       Price: true,
     },
   });
-  let usdOfElement = 0;
+  let usdOfElement = 0.0;
   for (let element of calcUSD) {
-    usdOfElement = element.Amount * element.Price;
+    usdOfElement = Number(element.Amount) * Number(element.Price);
     await prisma.sPL.update({
       where: {
         id: element.id,

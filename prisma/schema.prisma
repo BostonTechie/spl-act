@@ -15,19 +15,19 @@ model SPL {
   Token                String?
   Type                 String?
   From                 String?        @map("From/To")
-  Amount               Float?         @db.Real
-  Balance              Float?         @db.Real
+  Amount               Decimal?       @db.Decimal
+  Balance              Decimal?       @db.Decimal
   Created_Date         DateTime?      @map("Created Date")
   Account              String?
   Index                Int?
-  Price                Float?         @db.Real
-  inUSD                Float?         @db.Real
+  Price                Decimal?       @db.Decimal
+  inUSD                Decimal?       @db.Decimal
   Buy_or_Sell          String?        @map("Buy/Sell")
   Internal_or_External String?        @map("Internal/External")
-  Cumulative_Buy       Float?         @db.Real
-  Prev_Cumulative_Buy  Float?         @db.Real
-  Cumulative_Sell      Float?         @db.Real
-  Prev_Cumulative_Sell Float?         @db.Real
+  Cumulative_Buy       Decimal?       @db.Decimal
+  Prev_Cumulative_Buy  Decimal?       @db.Decimal
+  Cumulative_Sell      Decimal?       @db.Decimal
+  Prev_Cumulative_Sell Decimal?       @db.Decimal
   accountingJE         AccountingJE[]
 }
 
@@ -51,8 +51,8 @@ model AccountingJE {
   Ledger_Type1 String?
   Ledger_Type2 String?
   Ledger_Name  String?
-  Debit        Float?    @default(0) @db.Real
-  Credit       Float?    @default(0) @db.Real
+  Debit        Decimal?  @default(0) @db.Decimal
+  Credit       Decimal?  @default(0) @db.Decimal
   CryptoDBid   Int
   Duration     String?
   Notes        String?
@@ -66,7 +66,7 @@ model Ledger {
   DLedger_SType    String?  @default("Liquid")
   Cledger          CLedger?
   CLedger_SType    String?  @default("Deferred Revenue")
-  Realized         Boolean? @default(false)
+  Real             Boolean? @default(false)
   Sale             Sale?
   Notes            String?
 }
@@ -75,24 +75,24 @@ model History_price_DEC {
   id        Int       @id @unique @default(autoincrement())
   Asset     String?
   Date      DateTime?
-  Open      Float?    @default(0) @db.Real
-  High      Float?    @default(0) @db.Real
-  Low       Float?    @default(0) @db.Real
-  Close     Float?    @default(0) @db.Real
-  Adj_Close Float?    @default(0) @db.Real
-  Volume    Float?    @default(0) @db.Real
+  Open      Decimal?  @default(0) @db.Decimal
+  High      Decimal?  @default(0) @db.Decimal
+  Low       Decimal?  @default(0) @db.Decimal
+  Close     Decimal?  @default(0) @db.Decimal
+  Adj_Close Decimal?  @default(0) @db.Decimal
+  Volume    Decimal?  @default(0) @db.Decimal
 }
 
 model History_price_SPS {
   id        Int       @id @unique @default(autoincrement())
   Asset     String?
   Date      DateTime?
-  Open      Float?    @default(0) @db.Real
-  High      Float?    @default(0) @db.Real
-  Low       Float?    @default(0) @db.Real
-  Close     Float?    @default(0) @db.Real
-  Adj_Close Float?    @default(0) @db.Real
-  Volume    Float?    @default(0) @db.Real
+  Open      Decimal?  @default(0) @db.Decimal
+  High      Decimal?  @default(0) @db.Decimal
+  Low       Decimal?  @default(0) @db.Decimal
+  Close     Decimal?  @default(0) @db.Decimal
+  Adj_Close Decimal?  @default(0) @db.Decimal
+  Volume    Decimal?  @default(0) @db.Decimal
 }
 
 enum DLedger {
