@@ -3,6 +3,7 @@ const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 
 export function tablePrompt() {
+  let answer = null;
   //controls the console prompting in this page
   const prompt = new NumberPrompt({
     name: "number",
@@ -18,23 +19,29 @@ export function tablePrompt() {
   console.log("9...back");
   prompt.run().then(function (answer) {
     if (answer === 0) {
+      answer = null;
       deleteTokenTable();
     }
     if (answer === 1) {
+      answer = null;
       deleteAccountTable();
     }
     if (answer === 2) {
+      answer = null;
       deleteTokenTable();
       generateListingToken();
     }
     if (answer === 3) {
+      answer = null;
       deleteAccountTable();
       generateListingAccount();
     }
     if (answer === 4) {
+      answer = null;
       tableNames();
     }
     if (answer === 9) {
+      answer = null;
       mainPrompt();
     }
   });
@@ -48,53 +55,65 @@ async function deleteTokenTable() {
 }
 
 async function deleteAccountTable() {
-  //delete the Listing_Account table, which is used to determine what is internal vs. external...see columnFunctions.ts
+  /*
+  delete the Listing_Account table, which is used to
+  determine what is internal vs. external...see columnFunctions.ts
+  */
   await prisma.listing_Account.deleteMany({});
   console.log("👍👍👍 Truncate Listing_Account table complete");
   tablePrompt();
 }
 
 async function generateListingAccount() {
-  //generate table that lists all of the distinct accounts and put into the "Listing_Account" table in the database, which is used to determine what is internal vs. external...see columnFunctions.ts
+  /*
+    generate table that lists all of the distinct 
+    accounts and put into the "Listing_Account" 
+    table in the database, which is used to determine what
+    is internal vs. external...see columnFunctions.ts
+  */
 
-  const distinctAccounts = await prisma.sPL.findMany({
+  const distinctAccount = await prisma.sPL.findMany({
     select: {
       Account: true,
     },
     distinct: ["Account"],
   });
-
   await prisma.listing_Account.createMany({
-    data: distinctAccounts,
+    data: distinctAccount,
   });
+
   console.log(
-    "here are your distinct accounts, table updated with: ",
-    distinctAccounts
+    "here are your distinct accounts, table updated with:, ",
+    distinctAccount
   );
   tablePrompt();
 }
 
 async function generateListingToken() {
   //generate table that lists all of the distinct tokenss and put into the "Listing_Table" table in the database...this table is utilized to calc FIFO
-  const distinctTokens = await prisma.sPL.findMany({
+  const distinctAccount = await prisma.sPL.findMany({
     select: {
       Token: true,
     },
     distinct: ["Token"],
   });
   await prisma.listing_Token.createMany({
-    data: distinctTokens,
+    data: distinctAccount,
   });
 
   console.log(
     "here are your distinct accounts, table updated with:, ",
-    distinctTokens
+    distinctAccount
   );
   tablePrompt();
 }
 
 async function tableNames() {
-  //gives a listing of tables that currently exist in the current database configured in the .ENV file
+  /*
+    gives a listing of tables that 
+    currently exist in the current database
+    configured in the .ENV file
+  */
 
   const tablenames = await prisma.$queryRaw<
     Array<{ tablename: string }>
