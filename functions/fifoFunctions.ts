@@ -1,6 +1,7 @@
 import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
+import { queue, async } from "async/waterfall";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -20,12 +21,10 @@ export function fifoPrompt() {
     if (answer === 0) {
       answer = null;
       sumOfBuyfromAccounts();
-      sumOfPreviousBuyfromAccounts();
     }
     if (answer === 1) {
       answer = null;
       sumOfSellfromAccounts();
-      sumOfPreviousSellfromAccounts();
     }
     if (answer === 2) {
     }
@@ -110,6 +109,14 @@ async function sumOfBuyfromAccounts() {
       }
     }
   }
+
+  /* 
+    run script to pop
+    previous buy column,
+    which must be run after the cumlative
+    column is calculated
+ */
+  sumOfPreviousBuyfromAccounts();
 }
 
 async function sumOfPreviousBuyfromAccounts() {
@@ -181,6 +188,7 @@ async function sumOfPreviousBuyfromAccounts() {
     }
   }
   console.log("👍👍👍 cummulative sum complete");
+  fifoPrompt();
 }
 
 async function sumOfSellfromAccounts() {
@@ -234,7 +242,7 @@ async function sumOfSellfromAccounts() {
           Created_Date: true,
           Amount: true,
         },
-        take: 2,
+        //take: 2,
       });
 
       let currentSumAmount = 0;
@@ -266,6 +274,13 @@ async function sumOfSellfromAccounts() {
       }
     }
   }
+  /* 
+  run script to pop
+  previous buy column,
+  which must be run after the cumlative
+  column is calculated
+*/
+  sumOfPreviousSellfromAccounts();
 }
 
 async function sumOfPreviousSellfromAccounts() {
@@ -320,7 +335,7 @@ async function sumOfPreviousSellfromAccounts() {
           Amount: true,
           Cumulative_Sell: true,
         },
-        take: 2,
+        // take: 2,
       });
 
       /* 
@@ -342,4 +357,5 @@ async function sumOfPreviousSellfromAccounts() {
     }
   }
   console.log("👍👍👍 cummulative sell complete");
+  fifoPrompt();
 }
