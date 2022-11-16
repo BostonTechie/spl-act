@@ -93,7 +93,7 @@ async function sumOfBuyfromAccounts() {
       */
       for (let uniqueID of sumOfBuyfromWallet) {
         previousSumAmount = currentSumAmount;
-        currentSumAmount = currentSumAmount + uniqueID.Amount;
+        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
 
         await prisma.sPL.update({
           where: {
@@ -172,7 +172,7 @@ async function sumOfPreviousBuyfromAccounts() {
             Prev_Cumulative_Buy: previousBuy,
           },
         });
-        previousBuy = uniqueID.Cumulative_Buy;
+        previousBuy = Number(uniqueID.Cumulative_Buy);
       }
     }
   }
