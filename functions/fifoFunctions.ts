@@ -11,17 +11,21 @@ export function fifoPrompt() {
 
   console.log("Please enter one of the following options");
   console.log("0...calc cummulative buy + previous cummulative buy ");
-  console.log("1...'");
+  console.log("1...calc cummulative sell + previous cummulative sell'");
   console.log("2... ");
   console.log("3... '");
   console.log("4... ");
   console.log("9...back");
   prompt.run().then(function (answer) {
     if (answer === 0) {
+      answer = null;
       sumOfBuyfromAccounts();
       sumOfPreviousBuyfromAccounts();
     }
     if (answer === 1) {
+      answer = null;
+      sumOfSellfromAccounts();
+      sumOfPreviousSellfromAccounts();
     }
     if (answer === 2) {
     }
@@ -179,7 +183,7 @@ async function sumOfPreviousBuyfromAccounts() {
   console.log("👍👍👍 cummulative sum complete");
 }
 
-async function sumOSellfromAccounts() {
+async function sumOfSellfromAccounts() {
   console.log("🌟🌟🌟 starting calc of cumulative sell");
   /* 
     Grab all the unique accounts
@@ -230,7 +234,7 @@ async function sumOSellfromAccounts() {
           Created_Date: true,
           Amount: true,
         },
-        // take: 2,
+        take: 2,
       });
 
       let currentSumAmount = 0;
@@ -242,6 +246,12 @@ async function sumOSellfromAccounts() {
         in the DB
       */
       for (let uniqueID of sumOfSellfromWallet) {
+        /* 
+          Update previous sum to equal current sum
+          then update current sum to equal
+          curent sum plus amount in this row in 
+          table Spl Column amount
+        */
         previousSumAmount = currentSumAmount;
         currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
 
@@ -250,7 +260,7 @@ async function sumOSellfromAccounts() {
             id: uniqueID.id,
           },
           data: {
-            Cumulative_Buy: currentSumAmount,
+            Cumulative_Sell: currentSumAmount,
           },
         });
       }
@@ -310,7 +320,7 @@ async function sumOfPreviousSellfromAccounts() {
           Amount: true,
           Cumulative_Sell: true,
         },
-        // take: 2,
+        take: 2,
       });
 
       /* 
