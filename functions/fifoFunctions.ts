@@ -49,7 +49,7 @@ async function sumOfBuyfromAccounts() {
   });
 
   /* 
-    get all uniquey tokens to loop
+    get all unique tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -177,4 +177,159 @@ async function sumOfPreviousBuyfromAccounts() {
     }
   }
   console.log("👍👍👍 cummulative sum complete");
+}
+
+async function sumOSellfromAccounts() {
+  console.log("🌟🌟🌟 starting calc of cumulative sell");
+  /* 
+    Grab all the unique accounts
+    to loop thrugh later in function
+  */
+
+  const findAllAccounts = await prisma.listing_Account.findMany({
+    select: {
+      Account: true,
+    },
+  });
+
+  /* 
+    get all unique tokens to loop
+    through later in the function
+  */
+  const findAllTokens = await prisma.listing_Token.findMany({
+    select: {
+      Token: true,
+    },
+  });
+
+  /* 
+    Loop through all of the token names buy 
+    account and calculate the cumulative buy
+    for Fifo purposes
+  */
+
+  for (let accountName of findAllAccounts) {
+    for (let TokenName of findAllTokens) {
+      let sumOfSellfromWallet = await prisma.sPL.findMany({
+        /* 
+          Might need to order on something 
+          other than ID, Date would be preferable 
+          if Postgres can sucessfully import 
+          seconds/ milliseconds
+        */
+        orderBy: {
+          id: "asc",
+        },
+        where: {
+          Token: TokenName.Token,
+          Account: accountName.Account,
+          Buy_or_Sell: "Sell",
+        },
+        select: {
+          id: true,
+          Created_Date: true,
+          Amount: true,
+        },
+        // take: 2,
+      });
+
+      let currentSumAmount = 0;
+      let previousSumAmount = 0;
+
+      /* 
+        store the previous sum amount
+        add in the amount from the current buy record
+        in the DB
+      */
+      for (let uniqueID of sumOfSellfromWallet) {
+        previousSumAmount = currentSumAmount;
+        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
+
+        await prisma.sPL.update({
+          where: {
+            id: uniqueID.id,
+          },
+          data: {
+            Cumulative_Buy: currentSumAmount,
+          },
+        });
+      }
+    }
+  }
+}
+
+async function sumOfPreviousSellfromAccounts() {
+  /* 
+     Grab all the unique accounts
+     to loop thrugh later in function
+    */
+
+  const findAllAccounts = await prisma.listing_Account.findMany({
+    select: {
+      Account: true,
+    },
+  });
+
+  /* 
+    get all uniquey tokens to loop
+    through later in the function
+  */
+  const findAllTokens = await prisma.listing_Token.findMany({
+    select: {
+      Token: true,
+    },
+  });
+
+  /* 
+    Loop through all of the token names buy 
+    account and calculate the cumulative buy
+    for Fifo purposes
+  */
+
+  for (let accountName of findAllAccounts) {
+    for (let TokenName of findAllTokens) {
+      let previousSell = 0;
+      /* 
+       Might need to order on something 
+       other than ID, Date would be preferable 
+       if Postgres can sucessfully import 
+       seconds/ milliseconds
+      */
+      let sumOfSellfromWallet = await prisma.sPL.findMany({
+        orderBy: {
+          id: "asc",
+        },
+        where: {
+          Token: TokenName.Token,
+          Account: accountName.Account,
+          Buy_or_Sell: "Sell",
+        },
+        select: {
+          id: true,
+          Created_Date: true,
+          Amount: true,
+          Cumulative_Sell: true,
+        },
+        // take: 2,
+      });
+
+      /* 
+        store the previous sum amount
+        add in the amount from the current sell record
+        in the DB
+      */
+      for (let uniqueID of sumOfSellfromWallet) {
+        await prisma.sPL.update({
+          where: {
+            id: uniqueID.id,
+          },
+          data: {
+            Prev_Cumulative_Sell: previousSell,
+          },
+        });
+        previousSell = Number(uniqueID.Cumulative_Sell);
+      }
+    }
+  }
+  console.log("👍👍👍 cummulative sell complete");
 }
