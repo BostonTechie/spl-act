@@ -28,6 +28,8 @@ model SPL {
   Prev_Cumulative_Buy  Decimal?       @db.Decimal(65, 6)
   Cumulative_Sell      Decimal?       @db.Decimal(65, 6)
   Prev_Cumulative_Sell Decimal?       @db.Decimal(65, 6)
+  BalanceRX            Decimal?       @db.Decimal(65, 6)
+  Realized             Decimal?       @db.Decimal(65, 6)
   accountingJE         AccountingJE[]
 }
 

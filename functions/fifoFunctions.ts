@@ -14,7 +14,7 @@ export function fifoPrompt() {
   console.log("0...calc FIFO ");
   console.log("1...calc cummulative sell + previous cummulative sell");
   console.log("2...calc cummulative sell + previous cummulative sell");
-  console.log("3... '");
+  console.log("3...RX the balance '");
   console.log("4... ");
   console.log("9...back");
   prompt.run().then(function (answer) {
@@ -32,6 +32,8 @@ export function fifoPrompt() {
       sumOfSellfromAccounts();
     }
     if (answer === 3) {
+      answer = null;
+      rxBalance();
     }
     if (answer === 4) {
     }
@@ -225,7 +227,7 @@ async function sumOfSellfromAccounts() {
 
   for (let accountName of findAllAccounts) {
     for (let TokenName of findAllTokens) {
-      let sumOfSellfromWallet = await prisma.sPL.findMany({
+      let rxTheImportedBalance = await prisma.sPL.findMany({
         /* 
           Might need to order on something 
           other than ID, Date would be preferable 
@@ -256,7 +258,7 @@ async function sumOfSellfromAccounts() {
         add in the amount from the current buy record
         in the DB
       */
-      for (let uniqueID of sumOfSellfromWallet) {
+      for (let uniqueID of rxTheImportedBalance) {
         /* 
           Update previous sum to equal current sum
           then update current sum to equal
@@ -284,6 +286,79 @@ async function sumOfSellfromAccounts() {
   column is calculated
 */
   sumOfPreviousSellfromAccounts();
+}
+
+async function rxBalance() {
+  console.log("🌟🌟🌟 starting calc of RXBalance");
+  /* 
+     Grab all the unique accounts
+     to loop thrugh later in function
+    */
+
+  const findAllAccounts = await prisma.listing_Account.findMany({
+    select: {
+      Account: true,
+    },
+  });
+
+  /* 
+    get all unique tokens to loop
+    through later in the function
+  */
+  const findAllTokens = await prisma.listing_Token.findMany({
+    select: {
+      Token: true,
+    },
+  });
+
+  /* 
+    Loop through all of the token names buy 
+    account and calculate the cumulative buy
+    Balance, to ensure data intergrity
+  */
+
+  for (let accountName of findAllAccounts) {
+    for (let TokenName of findAllTokens) {
+      let sumOfBuyfromWallet = await prisma.sPL.findMany({
+        orderBy: {
+          id: "asc",
+        },
+        where: {
+          Token: TokenName.Token,
+          Account: accountName.Account,
+        },
+        select: {
+          id: true,
+          Created_Date: true,
+          Amount: true,
+        },
+        // take: 2,
+      });
+
+      let currentSumAmount = 0;
+      let previousSumAmount = 0;
+
+      /* 
+        store the previous sum amount
+        add in the amount from the current buy record
+        in the DB
+      */
+      for (let uniqueID of sumOfBuyfromWallet) {
+        previousSumAmount = currentSumAmount;
+        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
+
+        await prisma.sPL.update({
+          where: {
+            id: uniqueID.id,
+          },
+          data: {
+            BalanceRX: currentSumAmount,
+          },
+        });
+      }
+    }
+  }
+  console.log("👍👍👍 Completed calc of RXBalance");
 }
 
 async function sumOfPreviousSellfromAccounts() {
@@ -323,7 +398,7 @@ async function sumOfPreviousSellfromAccounts() {
        if Postgres can sucessfully import 
        seconds/ milliseconds
       */
-      let sumOfSellfromWallet = await prisma.sPL.findMany({
+      let rxTheImportedBalance = await prisma.sPL.findMany({
         orderBy: {
           id: "asc",
         },
@@ -346,7 +421,7 @@ async function sumOfPreviousSellfromAccounts() {
         add in the amount from the current sell record
         in the DB
       */
-      for (let uniqueID of sumOfSellfromWallet) {
+      for (let uniqueID of rxTheImportedBalance) {
         await prisma.sPL.update({
           where: {
             id: uniqueID.id,
