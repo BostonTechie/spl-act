@@ -23,6 +23,7 @@
     "@prisma/client": "^4.4.0",
     "async": "^3.2.4",
     "enquirer": "^2.3.6",
+    "fifo": "^2.4.1",
     "lodash": "^4.17.21"
   },
   "description": ""

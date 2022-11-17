@@ -11,9 +11,9 @@ export function fifoPrompt() {
   });
 
   console.log("Please enter one of the following options");
-  console.log("0...calc cummulative buy + previous cummulative buy ");
-  console.log("1...calc cummulative sell + previous cummulative sell'");
-  console.log("2... ");
+  console.log("0...calc FIFO ");
+  console.log("1...calc cummulative sell + previous cummulative sell");
+  console.log("2...calc cummulative sell + previous cummulative sell");
   console.log("3... '");
   console.log("4... ");
   console.log("9...back");
@@ -21,12 +21,15 @@ export function fifoPrompt() {
     if (answer === 0) {
       answer = null;
       sumOfBuyfromAccounts();
+      sumOfSellfromAccounts();
     }
     if (answer === 1) {
       answer = null;
-      sumOfSellfromAccounts();
+      sumOfBuyfromAccounts();
     }
     if (answer === 2) {
+      answer = null;
+      sumOfSellfromAccounts();
     }
     if (answer === 3) {
     }
