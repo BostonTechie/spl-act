@@ -13,7 +13,7 @@ export function JsonPrompt() {
   console.log("0...calc FIFO ");
   console.log("1...");
   console.log("2...");
-  console.log("3...RX the balance '");
+  console.log("3...");
   console.log("4... ");
   console.log("9...back");
   prompt.run().then(function (answer) {
@@ -67,10 +67,40 @@ async function calcFifoJson() {
     for Fifo purposes
   */
 
-  /* 
-    run script to pop
-    previous buy column,
-    which must be run after the cumlative
-    column is calculated
- */
+  for (let accountName of findAllAccounts) {
+    for (let TokenName of findAllTokens) {
+      let sumOfBuyfromWallet = await prisma.sPL.findMany({
+        orderBy: {
+          id: "asc",
+        },
+        where: {
+          Token: TokenName.Token,
+          Account: accountName.Account,
+        },
+        select: {
+          id: true,
+          Token: true,
+          Amount: true,
+          Created_Date: true,
+          Account: true,
+          Price: true,
+          inUSD: true,
+          Internal_or_External: true,
+        },
+        take: ,
+      });
+
+      let currentSumAmount = 0;
+      let previousSumAmount = 0;
+
+      /* 
+          store the previous sum amount
+          add in the amount from the current buy record
+          in the DB
+        */
+   
+    }
+  }
+
+
 }
