@@ -66,7 +66,7 @@ async function calcFifoJson() {
 
   let json2 = getJson as unknown as Prisma.JsonArray;
 
-  await prisma.sPL.update({
+  await prisma.fifo.update({
     where: {
       id: 2,
     },

@@ -515,12 +515,25 @@ async function fifoUpdateColumn() {
           { Internal_or_External: uniqueID.Internal_or_External },
         ] as Prisma.JsonArray;
 
-        await prisma.sPL.update({
+        await prisma.fifo.upsert({
           where: {
             id: uniqueID.id,
           },
-          data: {
+          update: {
             Fifo: jsonUpdateCol,
+            SPL: {
+              connect: {
+                id: uniqueID.id,
+              },
+            },
+          },
+          create: {
+            Fifo: jsonUpdateCol,
+            SPL: {
+              connect: {
+                id: uniqueID.id,
+              },
+            },
           },
         });
       }
