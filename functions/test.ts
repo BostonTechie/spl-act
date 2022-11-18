@@ -102,54 +102,77 @@ async function calcFifoJson() {
   //         add in the amount from the current buy record
   //         in the DB
   //       */
-  //     console.log(getJson);
   //   }
   // }
 
-  // let getJson = await prisma.sPL.findMany({
-  //   orderBy: {
-  //     id: "asc",
-  //   },
-  //   where: {
-  //     Token: "DEC",
-  //     Account: "Aggroed",
-  //   },
-  //   select: {
-  //     id: true,
-  //     Token: true,
-  //     Amount: true,
-  //     Created_Date: true,
-  //     Account: true,
-  //     Price: true,
-  //     inUSD: true,
-  //     Internal_or_External: true,
-  //   },
-  //   take: 1,
-  // });
+  let getJson = await prisma.sPL.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    where: {
+      Token: "DEC",
+      Account: "djsona",
+    },
+    select: {
+      id: true,
+      Token: true,
+      Amount: true,
+      Created_Date: true,
+      Account: true,
+      Price: true,
+      inUSD: true,
+      Internal_or_External: true,
+    },
+    take: 1,
+  });
 
-  // let thisString = JSON.stringify(getJson);
+  let json2 = getJson as unknown as Prisma.JsonArray;
 
-  // let json2 = getJson as unknown as Prisma.JsonArray;
+  await prisma.sPL.update({
+    where: {
+      id: 2,
+    },
+    data: {
+      Fifo: json2,
+    },
+  });
 
-  // await prisma.sPL.update({
+  /* 
+   Test case where I perform math on a single 
+   Json object that I fetched
+  */
+
+  // let logthis = await prisma.sPL.findUnique({
   //   where: {
   //     id: 1,
   //   },
-  //   data: {
-  //     Fifo: json2,
+  //   select: {
+  //     Fifo: true,
   //   },
   // });
 
-  let logthis = await prisma.sPL.findUnique({
+  // let math = JSON.parse(logthis.Fifo[0].Amount) + 1000;
+
+  // console.log(logthis.Fifo[0].Amount, " ", math);
+
+  /* 
+    what happens when I fetch a JSON
+    with multiple values or levels 
+    in it?
+  */
+
+  let multipleJson = await prisma.sPL.findMany({
+    orderBy: {
+      id: "asc",
+    },
     where: {
-      id: 1,
+      id: {
+        in: [1, 2],
+      },
     },
     select: {
       Fifo: true,
     },
   });
-
-  let math = JSON.parse(logthis.Fifo[0].Amount) + 1000;
-
-  console.log(logthis.Fifo[0].Amount, " ", math);
+  console.log(multipleJson[1]);
 }
