@@ -1,6 +1,10 @@
 import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
+import { Prisma } from "@prisma/client";
+import { stringify } from "querystring";
+
+export declare type JsonValue = string | number | boolean | null;
 
 export function JsonPrompt() {
   //controls the console prompting in this page
@@ -67,40 +71,85 @@ async function calcFifoJson() {
     for Fifo purposes
   */
 
-  for (let accountName of findAllAccounts) {
-    for (let TokenName of findAllTokens) {
-      let sumOfBuyfromWallet = await prisma.sPL.findMany({
-        orderBy: {
-          id: "asc",
-        },
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-        },
-        select: {
-          id: true,
-          Token: true,
-          Amount: true,
-          Created_Date: true,
-          Account: true,
-          Price: true,
-          inUSD: true,
-          Internal_or_External: true,
-        },
-        take: ,
-      });
+  // for (let accountName of findAllAccounts) {
+  //   for (let TokenName of findAllTokens) {
+  //     let getJson = await prisma.sPL.findMany({
+  //       orderBy: {
+  //         id: "asc",
+  //       },
+  //       where: {
+  //         Token: TokenName.Token,
+  //         Account: accountName.Account,
+  //       },
+  //       select: {
+  //         id: true,
+  //         Token: true,
+  //         Amount: true,
+  //         Created_Date: true,
+  //         Account: true,
+  //         Price: true,
+  //         inUSD: true,
+  //         Internal_or_External: true,
+  //       },
+  //       take: 1,
+  //     });
 
-      let currentSumAmount = 0;
-      let previousSumAmount = 0;
+  //     let currentSumAmount = 0;
+  //     let previousSumAmount = 0;
 
-      /* 
-          store the previous sum amount
-          add in the amount from the current buy record
-          in the DB
-        */
-   
-    }
-  }
+  //     /*
+  //         store the previous sum amount
+  //         add in the amount from the current buy record
+  //         in the DB
+  //       */
+  //     console.log(getJson);
+  //   }
+  // }
 
+  // let getJson = await prisma.sPL.findMany({
+  //   orderBy: {
+  //     id: "asc",
+  //   },
+  //   where: {
+  //     Token: "DEC",
+  //     Account: "Aggroed",
+  //   },
+  //   select: {
+  //     id: true,
+  //     Token: true,
+  //     Amount: true,
+  //     Created_Date: true,
+  //     Account: true,
+  //     Price: true,
+  //     inUSD: true,
+  //     Internal_or_External: true,
+  //   },
+  //   take: 1,
+  // });
 
+  // let thisString = JSON.stringify(getJson);
+
+  // let json2 = getJson as unknown as Prisma.JsonArray;
+
+  // await prisma.sPL.update({
+  //   where: {
+  //     id: 1,
+  //   },
+  //   data: {
+  //     Fifo: json2,
+  //   },
+  // });
+
+  let logthis = await prisma.sPL.findUnique({
+    where: {
+      id: 1,
+    },
+    select: {
+      Fifo: true,
+    },
+  });
+
+  let math = JSON.parse(logthis.Fifo[0].Amount) + 1000;
+
+  console.log(logthis.Fifo[0].Amount, " ", math);
 }
