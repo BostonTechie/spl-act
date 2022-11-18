@@ -9,4 +9,4 @@ for (let node = linkedList.node; node; node = linkedList.next(node)) {
   console.log("value is", node.value);
 }
 
-console.log(linkedList.node.value.value);
+console.log(linkedList.node.value.amount);

@@ -30,6 +30,7 @@ model SPL {
   Prev_Cumulative_Sell Decimal?       @db.Decimal(65, 6)
   BalanceRX            Decimal?       @db.Decimal(65, 6)
   Realized             Decimal?       @db.Decimal(65, 6)
+  Fifo                 Json?
   accountingJE         AccountingJE[]
 }
 
