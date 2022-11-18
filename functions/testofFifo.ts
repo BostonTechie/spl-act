@@ -43,68 +43,6 @@ export function JsonPrompt() {
 }
 
 async function calcFifoJson() {
-  console.log("🌟🌟🌟 starting calc of of Fifo storing in json");
-  /* 
-     Grab all the unique accounts
-     to loop thrugh later in function
-    */
-
-  const findAllAccounts = await prisma.listing_Account.findMany({
-    select: {
-      Account: true,
-    },
-  });
-
-  /* 
-    get all unique tokens to loop
-    through later in the function
-  */
-  const findAllTokens = await prisma.listing_Token.findMany({
-    select: {
-      Token: true,
-    },
-  });
-
-  /* 
-    Loop through all of the token names buy 
-    account and calculate the cumulative buy
-    for Fifo purposes
-  */
-
-  // for (let accountName of findAllAccounts) {
-  //   for (let TokenName of findAllTokens) {
-  //     let getJson = await prisma.sPL.findMany({
-  //       orderBy: {
-  //         id: "asc",
-  //       },
-  //       where: {
-  //         Token: TokenName.Token,
-  //         Account: accountName.Account,
-  //       },
-  //       select: {
-  //         id: true,
-  //         Token: true,
-  //         Amount: true,
-  //         Created_Date: true,
-  //         Account: true,
-  //         Price: true,
-  //         inUSD: true,
-  //         Internal_or_External: true,
-  //       },
-  //       take: 1,
-  //     });
-
-  //     let currentSumAmount = 0;
-  //     let previousSumAmount = 0;
-
-  //     /*
-  //         store the previous sum amount
-  //         add in the amount from the current buy record
-  //         in the DB
-  //       */
-  //   }
-  // }
-
   let getJson = await prisma.sPL.findMany({
     orderBy: {
       id: "asc",

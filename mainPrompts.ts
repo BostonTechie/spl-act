@@ -2,7 +2,7 @@ const { NumberPrompt } = require("enquirer");
 import { columnPrompt } from "./functions/columnFunctions";
 import { tablePrompt } from "./functions/tableFunctions";
 import { fifoPrompt } from "./functions/fifoFunctions";
-import { JsonPrompt } from "./functions/test";
+import { JsonPrompt } from "./functions/testofFifo";
 
 export function mainPrompt() {
   /*

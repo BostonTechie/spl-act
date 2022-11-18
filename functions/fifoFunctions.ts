@@ -1,6 +1,7 @@
 import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
+import { Prisma } from "@prisma/client";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -19,8 +20,9 @@ export function fifoPrompt() {
   prompt.run().then(function (answer) {
     if (answer === 0) {
       answer = null;
-      cumBuy();
-      cumSell();
+      // cumBuy();
+      // cumSell();
+      realizedColumn();
     }
     if (answer === 1) {
       answer = null;
@@ -439,7 +441,14 @@ async function rxBalance() {
 
 async function realizedColumn() {
   /* 
-  
+    In this function I call all the data
+    in order of date from Oldest to youngest
+    I put all of that data into a JSON
+    as the function rolls through time it calcs the
+    realized gains for any Sell based on the first
+    item (FIFO) queued in the JSON array,
+    every new buy adds a new "level" to the que of FIFO
+    JSON array
   */
 
   console.log("🌟🌟🌟 starting calc of realized Gains / losses");
@@ -464,15 +473,9 @@ async function realizedColumn() {
     },
   });
 
-  /* 
-    Loop through all of the token names buy 
-    account and calculate the cumulative buy
-    Balance, to ensure data intergrity
-  */
-
   for (let accountName of findAllAccounts) {
     for (let TokenName of findAllTokens) {
-      let sumOfBuyfromWallet = await prisma.sPL.findMany({
+      let createFifoJson = await prisma.sPL.findMany({
         orderBy: {
           id: "asc",
         },
@@ -482,34 +485,43 @@ async function realizedColumn() {
         },
         select: {
           id: true,
-          Created_Date: true,
+          Token: true,
           Amount: true,
+          Created_Date: true,
+          Account: true,
+          Price: true,
+          inUSD: true,
+          Buy_or_Sell: true,
+          Internal_or_External: true,
         },
-        // take: 2,
+        take: 1,
       });
 
-      let currentSumAmount = 0;
-      let previousSumAmount = 0;
-
-      /* 
-        store the previous sum amount
-        add in the amount from the current buy record
-        in the DB
-      */
-      for (let uniqueID of sumOfBuyfromWallet) {
-        previousSumAmount = currentSumAmount;
-        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
-
-        await prisma.sPL.update({
-          where: {
-            id: uniqueID.id,
-          },
-          data: {
-            BalanceRX: currentSumAmount,
-          },
-        });
+      for (let uniqueID of createFifoJson) {
+        if (uniqueID.Buy_or_Sell === "BUY") {
+          let jsonBUY = [
+            { id: uniqueID.id },
+            { token: uniqueID.Token },
+            { Amount: uniqueID.Amount },
+            { Created_Date: uniqueID.Created_Date },
+            { Account: uniqueID.Account },
+            { Price: uniqueID.Price },
+            { inUSD: uniqueID.inUSD },
+            { Buy_or_Sell: uniqueID.Buy_or_Sell },
+            { Internal_or_External: uniqueID.Internal_or_External },
+          ] as Prisma.JsonArray;
+          console.log(jsonBUY);
+          // await prisma.sPL.update({
+          //   where: {
+          //     id: uniqueID.id,
+          //   },
+          //   data: {
+          //     Fifo: uploadJsonToDb,
+          //   },
+          // });
+        }
       }
     }
   }
-  console.log("👍👍👍 Completed calc of RXBalance");
+  console.log("👍👍👍 realized Gains / losses complete");
 }
