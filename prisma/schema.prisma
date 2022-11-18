@@ -29,9 +29,20 @@ model SPL {
   Cumulative_Sell      Decimal?       @db.Decimal(65, 6)
   Prev_Cumulative_Sell Decimal?       @db.Decimal(65, 6)
   BalanceRX            Decimal?       @db.Decimal(65, 6)
-  Realized             Decimal?       @db.Decimal(65, 6)
-  Fifo                 Json?
-  accountingJE         AccountingJE[]
+  AccountingJE         AccountingJE[]
+  Fifo                 Fifo[]
+}
+
+model Fifo {
+  id            Int            @id @unique @default(autoincrement())
+  Realized      Decimal?       @db.Decimal(65, 6)
+  Fifo          Json?
+  LevelFifo     Json?
+  ConsumedFifo  Json?
+  RemainingFifo Json?
+  accountingJE  AccountingJE[]
+  sPLId         Int?
+  SPL           SPL?           @relation(fields: [sPLId], references: [id])
 }
 
 model Listing_Account {
@@ -57,9 +68,11 @@ model AccountingJE {
   Debit        Decimal?  @default(0) @db.Decimal(65, 6)
   Credit       Decimal?  @default(0) @db.Decimal(65, 6)
   CryptoDBid   Int
+  FifoDBid     Int
   Duration     String?
   Notes        String?
   SPL          SPL       @relation(fields: [CryptoDBid], references: [id])
+  Fifo         Fifo      @relation(fields: [FifoDBid], references: [id])
 }
 
 model Ledger {

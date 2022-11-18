@@ -22,7 +22,7 @@ export function fifoPrompt() {
       answer = null;
       // cumBuy();
       // cumSell();
-      realizedColumn();
+      fifoUpdateColumn();
     }
     if (answer === 1) {
       answer = null;
@@ -439,7 +439,7 @@ async function rxBalance() {
   console.log("👍👍👍 Completed calc of RXBalance");
 }
 
-async function realizedColumn() {
+async function fifoUpdateColumn() {
   /* 
     In this function I call all the data
     in order of date from Oldest to youngest
@@ -451,7 +451,7 @@ async function realizedColumn() {
     JSON array
   */
 
-  console.log("🌟🌟🌟 starting calc of realized Gains / losses");
+  console.log("🌟🌟🌟 starting calc of fifo Buys");
   /* 
      Grab all the unique accounts
      to loop thrugh later in function
@@ -494,34 +494,37 @@ async function realizedColumn() {
           Buy_or_Sell: true,
           Internal_or_External: true,
         },
-        take: 1,
+        // take: 1,
       });
 
       for (let uniqueID of createFifoJson) {
-        if (uniqueID.Buy_or_Sell === "BUY") {
-          let jsonBUY = [
-            { id: uniqueID.id },
-            { token: uniqueID.Token },
-            { Amount: uniqueID.Amount },
-            { Created_Date: uniqueID.Created_Date },
-            { Account: uniqueID.Account },
-            { Price: uniqueID.Price },
-            { inUSD: uniqueID.inUSD },
-            { Buy_or_Sell: uniqueID.Buy_or_Sell },
-            { Internal_or_External: uniqueID.Internal_or_External },
-          ] as Prisma.JsonArray;
-          console.log(jsonBUY);
-          // await prisma.sPL.update({
-          //   where: {
-          //     id: uniqueID.id,
-          //   },
-          //   data: {
-          //     Fifo: uploadJsonToDb,
-          //   },
-          // });
-        }
+        /* 
+            Creates a JSON to store the Original
+            values of a Buy to be used by FIFO
+          */
+
+        let jsonUpdateCol = [
+          { id: uniqueID.id },
+          { token: uniqueID.Token },
+          { Amount: uniqueID.Amount },
+          { Created_Date: uniqueID.Created_Date },
+          { Account: uniqueID.Account },
+          { Price: uniqueID.Price },
+          { inUSD: uniqueID.inUSD },
+          { Buy_or_Sell: uniqueID.Buy_or_Sell },
+          { Internal_or_External: uniqueID.Internal_or_External },
+        ] as Prisma.JsonArray;
+
+        await prisma.sPL.update({
+          where: {
+            id: uniqueID.id,
+          },
+          data: {
+            Fifo: jsonUpdateCol,
+          },
+        });
       }
     }
   }
-  console.log("👍👍👍 realized Gains / losses complete");
+  console.log("👍👍👍 fifo column complete");
 }
