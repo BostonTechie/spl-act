@@ -13,21 +13,35 @@ CREATE TABLE "SPL" (
     "Token" TEXT,
     "Type" TEXT,
     "From/To" TEXT,
-    "Amount" DECIMAL,
-    "Balance" DECIMAL,
+    "Amount" DECIMAL(65,6),
+    "Balance" DECIMAL(65,6),
     "Created Date" TIMESTAMP(3),
     "Account" TEXT,
     "Index" INTEGER,
-    "Price" DECIMAL,
-    "inUSD" DECIMAL,
+    "Price" DECIMAL(65,6),
+    "inUSD" DECIMAL(65,6),
     "Buy/Sell" TEXT,
     "Internal/External" TEXT,
-    "Cumulative_Buy" DECIMAL,
-    "Prev_Cumulative_Buy" DECIMAL,
-    "Cumulative_Sell" DECIMAL,
-    "Prev_Cumulative_Sell" DECIMAL,
+    "Cumulative_Buy" DECIMAL(65,6),
+    "Prev_Cumulative_Buy" DECIMAL(65,6),
+    "Cumulative_Sell" DECIMAL(65,6),
+    "Prev_Cumulative_Sell" DECIMAL(65,6),
+    "BalanceRX" DECIMAL(65,6),
 
     CONSTRAINT "SPL_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Fifo" (
+    "id" SERIAL NOT NULL,
+    "Realized" DECIMAL(65,6),
+    "Fifo" JSONB,
+    "LevelFifo" JSONB,
+    "ConsumedFifo" JSONB,
+    "RemainingFifo" JSONB,
+    "sPLId" INTEGER,
+
+    CONSTRAINT "Fifo_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -57,9 +71,10 @@ CREATE TABLE "AccountingJE" (
     "Ledger_Type1" TEXT,
     "Ledger_Type2" TEXT,
     "Ledger_Name" TEXT,
-    "Debit" DECIMAL DEFAULT 0,
-    "Credit" DECIMAL DEFAULT 0,
+    "Debit" DECIMAL(65,6) DEFAULT 0,
+    "Credit" DECIMAL(65,6) DEFAULT 0,
     "CryptoDBid" INTEGER NOT NULL,
+    "FifoDBid" INTEGER NOT NULL,
     "Duration" TEXT,
     "Notes" TEXT,
 
@@ -86,12 +101,12 @@ CREATE TABLE "History_price_DEC" (
     "id" SERIAL NOT NULL,
     "Asset" TEXT,
     "Date" TIMESTAMP(3),
-    "Open" DECIMAL DEFAULT 0,
-    "High" DECIMAL DEFAULT 0,
-    "Low" DECIMAL DEFAULT 0,
-    "Close" DECIMAL DEFAULT 0,
-    "Adj_Close" DECIMAL DEFAULT 0,
-    "Volume" DECIMAL DEFAULT 0,
+    "Open" DECIMAL(65,6) DEFAULT 0,
+    "High" DECIMAL(65,6) DEFAULT 0,
+    "Low" DECIMAL(65,6) DEFAULT 0,
+    "Close" DECIMAL(65,6) DEFAULT 0,
+    "Adj_Close" DECIMAL(65,6) DEFAULT 0,
+    "Volume" DECIMAL(65,6) DEFAULT 0,
 
     CONSTRAINT "History_price_DEC_pkey" PRIMARY KEY ("id")
 );
@@ -101,18 +116,21 @@ CREATE TABLE "History_price_SPS" (
     "id" SERIAL NOT NULL,
     "Asset" TEXT,
     "Date" TIMESTAMP(3),
-    "Open" DECIMAL DEFAULT 0,
-    "High" DECIMAL DEFAULT 0,
-    "Low" DECIMAL DEFAULT 0,
-    "Close" DECIMAL DEFAULT 0,
-    "Adj_Close" DECIMAL DEFAULT 0,
-    "Volume" DECIMAL DEFAULT 0,
+    "Open" DECIMAL(65,6) DEFAULT 0,
+    "High" DECIMAL(65,6) DEFAULT 0,
+    "Low" DECIMAL(65,6) DEFAULT 0,
+    "Close" DECIMAL(65,6) DEFAULT 0,
+    "Adj_Close" DECIMAL(65,6) DEFAULT 0,
+    "Volume" DECIMAL(65,6) DEFAULT 0,
 
     CONSTRAINT "History_price_SPS_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SPL_id_key" ON "SPL"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Fifo_id_key" ON "Fifo"("id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Listing_Account_id_key" ON "Listing_Account"("id");
@@ -133,4 +151,10 @@ CREATE UNIQUE INDEX "History_price_DEC_id_key" ON "History_price_DEC"("id");
 CREATE UNIQUE INDEX "History_price_SPS_id_key" ON "History_price_SPS"("id");
 
 -- AddForeignKey
+ALTER TABLE "Fifo" ADD CONSTRAINT "Fifo_sPLId_fkey" FOREIGN KEY ("sPLId") REFERENCES "SPL"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "AccountingJE" ADD CONSTRAINT "AccountingJE_CryptoDBid_fkey" FOREIGN KEY ("CryptoDBid") REFERENCES "SPL"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AccountingJE" ADD CONSTRAINT "AccountingJE_FifoDBid_fkey" FOREIGN KEY ("FifoDBid") REFERENCES "Fifo"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

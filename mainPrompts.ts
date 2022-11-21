@@ -16,8 +16,8 @@ export function mainPrompt() {
 
   console.clear();
   console.log("Please enter the number for your selection");
-  console.log("0...Column prompts");
-  console.log("1...Table prompts");
+  console.log("0...Set up database");
+  console.log("1...update/truncate tables");
   console.log("2...FIFO prompts");
   console.log("3...test prompts");
 

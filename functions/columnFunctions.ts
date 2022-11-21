@@ -10,21 +10,21 @@ export function columnPrompt() {
   });
 
   console.log("Please enter one of the following options");
-  console.log("0...Update the Buy/Sell Column");
+  console.log("0...All functions");
   console.log("1...Update the Internal / External Column");
   console.log("2...Lookup DEC prices");
   console.log("3...Lookup SPS prices");
-  console.log("4...All functions");
+  console.log("4...Update the Buy/Sell Column");
   console.log("9...back");
 
   prompt.run().then(function (answer) {
-    if (answer === 0) {
+    if (answer === 4) {
       answer = null;
       updateBuySellColumn();
     }
     if (answer === 1) {
       answer = null;
-      internalExternalColumn();
+      generateListingAccount();
     }
     if (answer === 2) {
       answer = null;
@@ -38,10 +38,10 @@ export function columnPrompt() {
       answer = null;
       lookupSPSPriceHistory();
     }
-    if (answer === 4) {
+    if (answer === 0) {
       answer = null;
       updateBuySellColumn();
-      internalExternalColumn();
+      generateListingAccount();
       lookupDECPriceHistory();
       lookupSPSPriceHistory();
     }
@@ -161,7 +161,7 @@ async function lookupDECPriceHistory() {
       },
     },
     data: {
-      Price: 0.000507,
+      Price: 0.0,
     },
   });
 
@@ -308,7 +308,7 @@ async function lookupSPSPriceHistory() {
       },
     },
     data: {
-      Price: 0.246423,
+      Price: 0.0,
     },
   });
 
@@ -418,4 +418,38 @@ async function lookupSPSPriceHistory() {
     });
   }
   console.log("👍👍👍 SPS lookup and USD calc complete");
+}
+
+async function generateListingAccount() {
+  /*
+    generate table that lists all of the distinct 
+    accounts and put into the "Listing_Account" 
+    table in the database, which is used to determine what
+    is internal vs. external...see columnFunctions.ts
+  */
+
+  const distinctAccount = await prisma.sPL.findMany({
+    select: {
+      Account: true,
+    },
+    distinct: ["Account"],
+  });
+  await prisma.listing_Account.createMany({
+    data: distinctAccount,
+  });
+
+  internalExternalColumn();
+}
+
+async function generateListingToken() {
+  //generate table that lists all of the distinct tokenss and put into the "Listing_Table" table in the database...this table is utilized to calc FIFO
+  const distinctAccount = await prisma.sPL.findMany({
+    select: {
+      Token: true,
+    },
+    distinct: ["Token"],
+  });
+  await prisma.listing_Token.createMany({
+    data: distinctAccount,
+  });
 }

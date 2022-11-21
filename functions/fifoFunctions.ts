@@ -22,7 +22,8 @@ export function fifoPrompt() {
       answer = null;
       // cumBuy();
       // cumSell();
-      fifoUpdateColumn();
+      //fifoUpdateColumn();
+      calcFifoColumns();
     }
     if (answer === 1) {
       answer = null;
@@ -451,7 +452,7 @@ async function fifoUpdateColumn() {
     JSON array
   */
 
-  console.log("🌟🌟🌟 starting calc of fifo Buys");
+  console.log("🌟🌟🌟 Updating FiFo column");
   /* 
      Grab all the unique accounts
      to loop thrugh later in function
@@ -497,11 +498,13 @@ async function fifoUpdateColumn() {
         // take: 1,
       });
 
+      // i used in for loop below
+      let i = 0;
       for (let uniqueID of createFifoJson) {
         /* 
-            Creates a JSON to store the Original
-            values of a Buy to be used by FIFO
-          */
+          Creates a JSON to store the Original
+          values of a Buy to be used by FIFO
+        */
 
         let jsonUpdateCol = [
           { id: uniqueID.id },
@@ -515,29 +518,215 @@ async function fifoUpdateColumn() {
           { Internal_or_External: uniqueID.Internal_or_External },
         ] as Prisma.JsonArray;
 
-        await prisma.fifo.upsert({
-          where: {
-            id: uniqueID.id,
-          },
-          update: {
-            Fifo: jsonUpdateCol,
-            SPL: {
-              connect: {
-                id: uniqueID.id,
+        if (i === 0) {
+          console.log(i, uniqueID.id);
+          /* 
+              Fifo must always start
+              at the very first transaction
+              and roll from there, in theroy
+              that transaction would always be
+              a buy
+            */
+
+          await prisma.fifo.upsert({
+            where: {
+              id: uniqueID.id,
+            },
+            update: {
+              Fifo: jsonUpdateCol,
+              LevelFifo: jsonUpdateCol,
+              SPL: {
+                connect: {
+                  id: uniqueID.id,
+                },
               },
             },
-          },
-          create: {
-            Fifo: jsonUpdateCol,
-            SPL: {
-              connect: {
-                id: uniqueID.id,
+            create: {
+              Fifo: jsonUpdateCol,
+              LevelFifo: jsonUpdateCol,
+              SPL: {
+                connect: {
+                  id: uniqueID.id,
+                },
               },
             },
-          },
-        });
+          });
+          i++;
+        }
+        /* 
+          Create or update the 
+          Fifo column which just stores a
+          frozen value
+        */
+        if (i != 0) {
+          await prisma.fifo.upsert({
+            where: {
+              id: uniqueID.id,
+            },
+            update: {
+              Fifo: jsonUpdateCol,
+              SPL: {
+                connect: {
+                  id: uniqueID.id,
+                },
+              },
+            },
+            create: {
+              Fifo: jsonUpdateCol,
+              SPL: {
+                connect: {
+                  id: uniqueID.id,
+                },
+              },
+            },
+          });
+        }
       }
     }
   }
   console.log("👍👍👍 fifo column complete");
+}
+
+async function calcFifoColumns() {
+  /* 
+    In this function I call all the data
+    in order of date from Oldest to youngest
+    I put all of that data into a JSON
+    as the function rolls through time it calcs the
+    realized gains for any Sell based on the first
+    item (FIFO) queued in the JSON array,
+    every new buy adds a new "level" to the que of FIFO
+    JSON array
+  */
+
+  console.log("🌟🌟🌟 starting calc of fifo ");
+  /* 
+     Grab all the unique transactions
+     that are created by the fifoUpdateColumn function
+     to loop thrugh later in function
+    */
+
+  // let findFifoTransaction = await prisma.fifo.findMany({
+  //   where: {
+  //     meta: {
+  //       equals: Prisma.AnyNull,
+  //     },
+  //   },
+  //   select: {
+  //     LevelFifo: true,
+  //   },
+  //   //take: 1,
+  // });
+
+  // for (let accountName of findAllAccounts) {
+  //   for (let TokenName of findAllTokens) {
+  //     let createFifoJson = await prisma.sPL.findMany({
+  //       orderBy: {
+  //         id: "asc",
+  //       },
+  //       where: {
+  //         Token: TokenName.Token,
+  //         Account: accountName.Account,
+  //       },
+  //       select: {
+  //         id: true,
+  //         Token: true,
+  //         Amount: true,
+  //         Created_Date: true,
+  //         Account: true,
+  //         Price: true,
+  //         inUSD: true,
+  //         Buy_or_Sell: true,
+  //         Internal_or_External: true,
+  //       },
+  //       // take: 1,
+  //     });
+
+  //     // i used in for loop below
+  //     let i = 0;
+  //     for (let uniqueID of createFifoJson) {
+  //       /*
+  //         Creates a JSON to store the Original
+  //         values of a Buy to be used by FIFO
+  //       */
+
+  //       let jsonUpdateCol = [
+  //         { id: uniqueID.id },
+  //         { token: uniqueID.Token },
+  //         { Amount: uniqueID.Amount },
+  //         { Created_Date: uniqueID.Created_Date },
+  //         { Account: uniqueID.Account },
+  //         { Price: uniqueID.Price },
+  //         { inUSD: uniqueID.inUSD },
+  //         { Buy_or_Sell: uniqueID.Buy_or_Sell },
+  //         { Internal_or_External: uniqueID.Internal_or_External },
+  //       ] as Prisma.JsonArray;
+
+  //       if (i === 0) {
+  //         console.log(i, uniqueID.id);
+  //         /*
+  //             Fifo must always start
+  //             at the very first transaction
+  //             and roll from there, in theroy
+  //             that transaction would always be
+  //             a buy
+  //           */
+
+  //         await prisma.fifo.upsert({
+  //           where: {
+  //             id: uniqueID.id,
+  //           },
+  //           update: {
+  //             Fifo: jsonUpdateCol,
+  //             LevelFifo: jsonUpdateCol,
+  //             SPL: {
+  //               connect: {
+  //                 id: uniqueID.id,
+  //               },
+  //             },
+  //           },
+  //           create: {
+  //             Fifo: jsonUpdateCol,
+  //             LevelFifo: jsonUpdateCol,
+  //             SPL: {
+  //               connect: {
+  //                 id: uniqueID.id,
+  //               },
+  //             },
+  //           },
+  //         });
+  //         i++;
+  //       }
+  //       /*
+  //         Create or update the
+  //         Fifo column which just stores a
+  //         frozen value
+  //       */
+  //       if (i != 0) {
+  //         await prisma.fifo.upsert({
+  //           where: {
+  //             id: uniqueID.id,
+  //           },
+  //           update: {
+  //             Fifo: jsonUpdateCol,
+  //             SPL: {
+  //               connect: {
+  //                 id: uniqueID.id,
+  //               },
+  //             },
+  //           },
+  //           create: {
+  //             Fifo: jsonUpdateCol,
+  //             SPL: {
+  //               connect: {
+  //                 id: uniqueID.id,
+  //               },
+  //             },
+  //           },
+  //         });
+  //       }
+  //     }
+  //   }
+  // }
+  // console.log(findFifoTransaction.length, "👍👍👍 fifo calculation complete");
 }
