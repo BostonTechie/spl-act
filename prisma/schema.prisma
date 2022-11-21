@@ -35,7 +35,7 @@ model SPL {
 
 model Fifo {
   id            Int            @id @unique @default(autoincrement())
-  Realized      Decimal?       @db.Decimal(65, 6)
+  Realized      Decimal?       @default(0) @db.Decimal(65, 6)
   Fifo          Json?
   LevelFifo     Json?
   ConsumedFifo  Json?

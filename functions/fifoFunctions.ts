@@ -606,6 +606,7 @@ async function fifoUpdateColumn() {
 }
 
 async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
+  console.log(createdIdArrayFirstFifoLevel);
   /* 
     In this function I call all the data
     in order of date from Oldest to youngest
@@ -620,8 +621,8 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
   console.log("🌟🌟🌟 starting calc of fifo ");
   /* 
      Grab all the unique transactions
-     that are created by the fifoUpdateColumn function
-     to loop thrugh later in function
+     that are not the first level
+     of the FIFO functions
     */
 
   let findFifoTransaction = await prisma.fifo.findMany({
@@ -633,119 +634,16 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       },
     },
     select: {
+      id: true,
+      Fifo: true,
       LevelFifo: true,
     },
+    take: 1,
   });
 
-  // for (let accountName of findAllAccounts) {
-  //   for (let TokenName of findAllTokens) {
-  //     let createFifoJson = await prisma.sPL.findMany({
-  //       orderBy: {
-  //         id: "asc",
-  //       },
-  //       where: {
-  //         Token: TokenName.Token,
-  //         Account: accountName.Account,
-  //       },
-  //       select: {
-  //         id: true,
-  //         Token: true,
-  //         Amount: true,
-  //         Created_Date: true,
-  //         Account: true,
-  //         Price: true,
-  //         inUSD: true,
-  //         Buy_or_Sell: true,
-  //         Internal_or_External: true,
-  //       },
-  //       // take: 1,
-  //     });
+  console.log("row 645", findFifoTransaction[0]);
 
-  //     // i used in for loop below
-  //     let i = 0;
-  //     for (let uniqueID of createFifoJson) {
-  //       /*
-  //         Creates a JSON to store the Original
-  //         values of a Buy to be used by FIFO
-  //       */
-
-  //       let jsonUpdateCol = [
-  //         { id: uniqueID.id },
-  //         { token: uniqueID.Token },
-  //         { Amount: uniqueID.Amount },
-  //         { Created_Date: uniqueID.Created_Date },
-  //         { Account: uniqueID.Account },
-  //         { Price: uniqueID.Price },
-  //         { inUSD: uniqueID.inUSD },
-  //         { Buy_or_Sell: uniqueID.Buy_or_Sell },
-  //         { Internal_or_External: uniqueID.Internal_or_External },
-  //       ] as Prisma.JsonArray;
-
-  //       if (i === 0) {
-  //         console.log(i, uniqueID.id);
-  //         /*
-  //             Fifo must always start
-  //             at the very first transaction
-  //             and roll from there, in theroy
-  //             that transaction would always be
-  //             a buy
-  //           */
-
-  //         await prisma.fifo.upsert({
-  //           where: {
-  //             id: uniqueID.id,
-  //           },
-  //           update: {
-  //             Fifo: jsonUpdateCol,
-  //             LevelFifo: jsonUpdateCol,
-  //             SPL: {
-  //               connect: {
-  //                 id: uniqueID.id,
-  //               },
-  //             },
-  //           },
-  //           create: {
-  //             Fifo: jsonUpdateCol,
-  //             LevelFifo: jsonUpdateCol,
-  //             SPL: {
-  //               connect: {
-  //                 id: uniqueID.id,
-  //               },
-  //             },
-  //           },
-  //         });
-  //         i++;
-  //       }
-  //       /*
-  //         Create or update the
-  //         Fifo column which just stores a
-  //         frozen value
-  //       */
-  //       if (i != 0) {
-  //         await prisma.fifo.upsert({
-  //           where: {
-  //             id: uniqueID.id,
-  //           },
-  //           update: {
-  //             Fifo: jsonUpdateCol,
-  //             SPL: {
-  //               connect: {
-  //                 id: uniqueID.id,
-  //               },
-  //             },
-  //           },
-  //           create: {
-  //             Fifo: jsonUpdateCol,
-  //             SPL: {
-  //               connect: {
-  //                 id: uniqueID.id,
-  //               },
-  //             },
-  //           },
-  //         });
-  //       }
-  //     }
-  //   }
-  // }
-  console.log(findFifoTransaction[0], "👍👍👍 fifo calculation complete");
+  for (let element of findFifoTransaction) {
+    // console.log("fdlksj", element.Fifo);
+  }
 }

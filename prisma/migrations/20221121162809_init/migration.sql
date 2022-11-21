@@ -34,7 +34,7 @@ CREATE TABLE "SPL" (
 -- CreateTable
 CREATE TABLE "Fifo" (
     "id" SERIAL NOT NULL,
-    "Realized" DECIMAL(65,6),
+    "Realized" DECIMAL(65,6) DEFAULT 0,
     "Fifo" JSONB,
     "LevelFifo" JSONB,
     "ConsumedFifo" JSONB,
