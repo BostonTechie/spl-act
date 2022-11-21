@@ -41,6 +41,7 @@ export function columnPrompt() {
     if (answer === 0) {
       answer = null;
       updateBuySellColumn();
+      generateListingToken();
       generateListingAccount();
       lookupDECPriceHistory();
       lookupSPSPriceHistory();

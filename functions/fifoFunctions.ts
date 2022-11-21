@@ -2,6 +2,7 @@ import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
+import { isDataView } from "util/types";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -22,8 +23,8 @@ export function fifoPrompt() {
       answer = null;
       // cumBuy();
       // cumSell();
-      //fifoUpdateColumn();
-      calcFifoColumns();
+      fifoUpdateColumn();
+      //calcFifoColumns();
     }
     if (answer === 1) {
       answer = null;
@@ -474,6 +475,16 @@ async function fifoUpdateColumn() {
     },
   });
 
+  /* 
+    Created Id Array is an an Array
+    to store the unique id every time
+    the logic gets onto a new token within
+    a new account. Every time this new situation 
+    occurs, by definition that should be the first 
+    level of FIFO, assuming  your data is 
+    organized by date ascending
+  */
+  let createdIdArrayFirstFifoLevel = [];
   for (let accountName of findAllAccounts) {
     for (let TokenName of findAllTokens) {
       let createFifoJson = await prisma.sPL.findMany({
@@ -500,6 +511,7 @@ async function fifoUpdateColumn() {
 
       // i used in for loop below
       let i = 0;
+
       for (let uniqueID of createFifoJson) {
         /* 
           Creates a JSON to store the Original
@@ -518,8 +530,14 @@ async function fifoUpdateColumn() {
           { Internal_or_External: uniqueID.Internal_or_External },
         ] as Prisma.JsonArray;
 
+        /* 
+          create an array to use as filter later 
+          in this function to loop through
+        */
+
         if (i === 0) {
-          console.log(i, uniqueID.id);
+          createdIdArrayFirstFifoLevel.push(uniqueID.id);
+
           /* 
               Fifo must always start
               at the very first transaction
@@ -584,10 +602,10 @@ async function fifoUpdateColumn() {
       }
     }
   }
-  console.log("👍👍👍 fifo column complete");
+  calcFifoColumns(createdIdArrayFirstFifoLevel);
 }
 
-async function calcFifoColumns() {
+async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
   /* 
     In this function I call all the data
     in order of date from Oldest to youngest
@@ -606,17 +624,18 @@ async function calcFifoColumns() {
      to loop thrugh later in function
     */
 
-  // let findFifoTransaction = await prisma.fifo.findMany({
-  //   where: {
-  //     meta: {
-  //       equals: Prisma.AnyNull,
-  //     },
-  //   },
-  //   select: {
-  //     LevelFifo: true,
-  //   },
-  //   //take: 1,
-  // });
+  let findFifoTransaction = await prisma.fifo.findMany({
+    where: {
+      NOT: {
+        id: {
+          in: createdIdArrayFirstFifoLevel,
+        },
+      },
+    },
+    select: {
+      LevelFifo: true,
+    },
+  });
 
   // for (let accountName of findAllAccounts) {
   //   for (let TokenName of findAllTokens) {
@@ -728,5 +747,5 @@ async function calcFifoColumns() {
   //     }
   //   }
   // }
-  // console.log(findFifoTransaction.length, "👍👍👍 fifo calculation complete");
+  console.log(findFifoTransaction[0], "👍👍👍 fifo calculation complete");
 }
