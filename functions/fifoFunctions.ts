@@ -59,7 +59,7 @@ async function cumBuy() {
   });
 
   /* 
-    get all unique tokens to loop
+    get all unique Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -69,7 +69,7 @@ async function cumBuy() {
   });
 
   /* 
-    Loop through all of the token names buy 
+    Loop through all of the Token names buy 
     account and calculate the cumulative buy
     for Fifo purposes
   */
@@ -139,7 +139,7 @@ async function prevCumBuy() {
   });
 
   /* 
-    get all uniquey tokens to loop
+    get all uniquey Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -149,7 +149,7 @@ async function prevCumBuy() {
   });
 
   /* 
-    Loop through all of the token names buy 
+    Loop through all of the Token names buy 
     account and calculate the cumulative buy
     for Fifo purposes
   */
@@ -212,7 +212,7 @@ async function cumSell() {
   });
 
   /* 
-    get all unique tokens to loop
+    get all unique Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -222,7 +222,7 @@ async function cumSell() {
   });
 
   /* 
-    Loop through all of the token names buy 
+    Loop through all of the Token names buy 
     account and calculate the cumulative buy
     for Fifo purposes
   */
@@ -303,7 +303,7 @@ async function prevCumSell() {
   });
 
   /* 
-    get all uniquey tokens to loop
+    get all uniquey Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -313,7 +313,7 @@ async function prevCumSell() {
   });
 
   /* 
-    Loop through all of the token names buy 
+    Loop through all of the Token names buy 
     account and calculate the cumulative buy
     for Fifo purposes
   */
@@ -381,7 +381,7 @@ async function rxBalance() {
   });
 
   /* 
-    get all unique tokens to loop
+    get all unique Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -391,7 +391,7 @@ async function rxBalance() {
   });
 
   /* 
-    Loop through all of the token names buy 
+    Loop through all of the Token names buy 
     account and calculate the cumulative buy
     Balance, to ensure data intergrity
   */
@@ -465,7 +465,7 @@ async function fifoUpdateColumn() {
   });
 
   /* 
-    get all unique tokens to loop
+    get all unique Tokens to loop
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
@@ -477,7 +477,7 @@ async function fifoUpdateColumn() {
   /* 
     Created Id Array is an an Array
     to store the unique id every time
-    the logic gets onto a new token within
+    the logic gets onto a new Token within
     a new account. Every time this new situation 
     occurs, by definition that should be the first 
     level of FIFO, assuming  your data is 
@@ -519,7 +519,7 @@ async function fifoUpdateColumn() {
 
         let jsonUpdateCol = [
           { id: uniqueID.id },
-          { token: uniqueID.Token },
+          { Token: uniqueID.Token },
           { Amount: uniqueID.Amount },
           { Created_Date: uniqueID.Created_Date },
           { Account: uniqueID.Account },
@@ -649,7 +649,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     /* 
       here is how to grab element pieces in this loop:
         element.Fifo[0].id
-        element.Fifo[1].token
+        element.Fifo[1].Token
         element.Fifo[2].Amount
         element.Fifo[3].Created_Date
         element.Fifo[4].Account
@@ -659,7 +659,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
         element.Fifo[8].Internal_or_External
 
         prevLevel.LevelFifo[0].id
-        prevLevel.LevelFifo[1].token
+        prevLevel.LevelFifo[1].Token
         prevLevel.LevelFifo[2].Amount
         prevLevel.LevelFifo[3].Created_Date
         prevLevel.LevelFifo[4].Account
@@ -713,29 +713,45 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
             id: element.Fifo[0].id,
           },
           update: {
+            Realized: realized,
+            LevelFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: prevLevel.LevelFifo[1].Token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Price: prevLevel.LevelFifo[5].Price,
+              InUSd: prevLevel.LevelFifo[6].inUSD,
+            },
             ConsumedFifo: {
               id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].token,
+              Token: element.Fifo[1].Token,
               Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: element.Fifo[2].Amount,
             },
             RemainingFifo: {
               id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].token,
+              Token: element.Fifo[1].Token,
               Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: amountLessThanZero,
             },
           },
           create: {
+            Realized: realized,
+            LevelFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: prevLevel.LevelFifo[1].Token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Price: prevLevel.LevelFifo[5].Price,
+              InUSd: prevLevel.LevelFifo[6].inUSD,
+            },
             ConsumedFifo: {
               id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].token,
+              Token: element.Fifo[1].Token,
               Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: element.Fifo[2].Amount,
             },
             RemainingFifo: {
               id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].token,
+              Token: element.Fifo[1].Token,
               Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: amountLessThanZero,
             },
