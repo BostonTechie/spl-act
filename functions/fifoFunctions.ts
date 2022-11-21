@@ -552,6 +552,8 @@ async function fifoUpdateColumn() {
             update: {
               Fifo: jsonUpdateCol,
               LevelFifo: jsonUpdateCol,
+              ConsumedFifo: { Buy_or_Sell: "Buy" },
+              RemainingFifo: jsonUpdateCol,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -561,6 +563,8 @@ async function fifoUpdateColumn() {
             create: {
               Fifo: jsonUpdateCol,
               LevelFifo: jsonUpdateCol,
+              ConsumedFifo: { Buy_or_Sell: "Buy" },
+              RemainingFifo: jsonUpdateCol,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -605,7 +609,6 @@ async function fifoUpdateColumn() {
 }
 
 async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
-  console.log(createdIdArrayFirstFifoLevel);
   /* 
     In this function I call all the data
     in order of date from Oldest to youngest
@@ -654,9 +657,45 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
         element.Fifo[6].inUSD
         element.Fifo[7].Buy_or_Sell
         element.Fifo[8].Internal_or_External
+
+        prevLevel.RemainingFifo[0].id
+        prevLevel.RemainingFifo[1].token
+        prevLevel.RemainingFifo[2].Amount
+        prevLevel.RemainingFifo[3].Created_date
+        prevLevel.RemainingFifo[4].Account
+        prevLevel.RemainingFifo[5].Price
+        prevLevel.RemainingFifo[6].inUSD
+        prevLevel.RemainingFifo[7].Buy_or_Sell
+        prevLevel.RemainingFifo[8].Internal_or_External
+
     */
 
     if (element.Fifo[7].Buy_or_Sell === "Sell") {
+      /* 
+        find the previous level of Fifo
+        and update accordingly for what a "sell" entails
+      */
+
+      let prevID = element.Fifo[0].id - 1;
+
+      let prevLevel = await prisma.fifo.findUnique({
+        where: {
+          id: prevID,
+        },
+        select: {
+          RemainingFifo: true,
+        },
+      });
+
+      // let currentSellAmount = element.Fifo[2].Amount;
+      // let remainAmountFifoLevel = prevLevel[0].Amount;
+
+      console.log(
+        "element: ",
+        element.Fifo[2].Amount,
+        "previous level: ",
+        prevLevel.RemainingFifo[2].Amount
+      );
     }
   }
 }
