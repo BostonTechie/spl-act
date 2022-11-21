@@ -2,7 +2,6 @@ import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
-import { isDataView } from "util/types";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -618,7 +617,6 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     JSON array
   */
 
-  console.log("🌟🌟🌟 starting calc of fifo ");
   /* 
      Grab all the unique transactions
      that are not the first level
@@ -626,6 +624,9 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     */
 
   let findFifoTransaction = await prisma.fifo.findMany({
+    orderBy: {
+      id: "asc",
+    },
     where: {
       NOT: {
         id: {
@@ -641,9 +642,21 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     take: 1,
   });
 
-  console.log("row 645", findFifoTransaction[0]);
-
   for (let element of findFifoTransaction) {
-    // console.log("fdlksj", element.Fifo);
+    /* 
+      here is how to grab element pieces in this loop:
+        element.Fifo[0].id
+        element.Fifo[1].token
+        element.Fifo[2].Amount
+        element.Fifo[3].Created_Date
+        element.Fifo[4].Account
+        element.Fifo[5].Price
+        element.Fifo[6].inUSD
+        element.Fifo[7].Buy_or_Sell
+        element.Fifo[8].Internal_or_External
+    */
+
+    if (element.Fifo[7].Buy_or_Sell === "Sell") {
+    }
   }
 }
