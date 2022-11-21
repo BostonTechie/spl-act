@@ -658,15 +658,15 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
         element.Fifo[7].Buy_or_Sell
         element.Fifo[8].Internal_or_External
 
-        prevLevel.RemainingFifo[0].id
-        prevLevel.RemainingFifo[1].token
-        prevLevel.RemainingFifo[2].Amount
-        prevLevel.RemainingFifo[3].Created_date
-        prevLevel.RemainingFifo[4].Account
-        prevLevel.RemainingFifo[5].Price
-        prevLevel.RemainingFifo[6].inUSD
-        prevLevel.RemainingFifo[7].Buy_or_Sell
-        prevLevel.RemainingFifo[8].Internal_or_External
+        prevLevel.LevelFifo[0].id
+        prevLevel.LevelFifo[1].token
+        prevLevel.LevelFifo[2].Amount
+        prevLevel.LevelFifo[3].Created_Date
+        prevLevel.LevelFifo[4].Account
+        prevLevel.LevelFifo[5].Price
+        prevLevel.LevelFifo[6].inUSD
+        prevLevel.LevelFifo[7].Buy_or_Sell
+        prevLevel.LevelFifo[8].Internal_or_External
 
     */
 
@@ -683,19 +683,65 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
           id: prevID,
         },
         select: {
-          RemainingFifo: true,
+          LevelFifo: true,
         },
       });
 
-      // let currentSellAmount = element.Fifo[2].Amount;
-      // let remainAmountFifoLevel = prevLevel[0].Amount;
+      /* 
+        Define some variables for calulation ease
 
-      console.log(
-        "element: ",
-        element.Fifo[2].Amount,
-        "previous level: ",
-        prevLevel.RemainingFifo[2].Amount
-      );
+      */
+      let currentSellAmount = Number(element.Fifo[2].Amount);
+      let currentPrice = Number(element.Fifo[5].Price);
+      let remainingFifoAmount = Number(prevLevel.LevelFifo[2].Amount);
+      let remainingFifoPrice = Number(element.Fifo[5].Price);
+      let amountLessThanZero =
+        Number(remainingFifoAmount) + Number(currentSellAmount);
+      let costBasis = 0;
+
+      if (amountLessThanZero >= 0) {
+        /* 
+          calcualte realized gain/ loss in the case that
+          the sell doesn't fully consume the FIFO level
+        */
+        costBasis = currentSellAmount * remainingFifoPrice;
+        let soldInUSD = currentPrice * currentSellAmount;
+        let realized = soldInUSD - costBasis;
+
+        await prisma.fifo.upsert({
+          where: {
+            id: element.Fifo[0].id,
+          },
+          update: {
+            ConsumedFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: element.Fifo[1].token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Amount: element.Fifo[2].Amount,
+            },
+            RemainingFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: element.Fifo[1].token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Amount: amountLessThanZero,
+            },
+          },
+          create: {
+            ConsumedFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: element.Fifo[1].token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Amount: element.Fifo[2].Amount,
+            },
+            RemainingFifo: {
+              id: prevLevel.LevelFifo[0].id,
+              Token: element.Fifo[1].token,
+              Date: prevLevel.LevelFifo[3].Created_Date,
+              Amount: amountLessThanZero,
+            },
+          },
+        });
+      }
     }
   }
 }
