@@ -25,20 +25,20 @@ export function fifoPrompt() {
       fifoUpdateColumn();
       //calcFifoColumns();
     }
-    if (answer === 1) {
-      answer = null;
-      cumBuy();
-    }
-    if (answer === 2) {
-      answer = null;
-      cumSell();
-    }
-    if (answer === 3) {
-      answer = null;
-      rxBalance();
-    }
-    if (answer === 4) {
-    }
+    // if (answer === 1) {
+    //   answer = null;
+    //   cumBuy();
+    // }
+    // if (answer === 2) {
+    //   answer = null;
+    //   cumSell();
+    // }
+    // if (answer === 3) {
+    //   answer = null;
+    //   rxBalance();
+    // }
+    // if (answer === 4) {
+    // }
     if (answer === 9) {
       mainPrompt();
     }
@@ -642,7 +642,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       Fifo: true,
       LevelFifo: true,
     },
-    take: 1,
+    // take: 1,
   });
 
   for (let element of findFifoTransaction) {
@@ -684,6 +684,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
         },
         select: {
           LevelFifo: true,
+          RemainingFifo: true,
         },
       });
 
@@ -693,7 +694,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       */
       let currentSellAmount = Number(element.Fifo[2].Amount);
       let currentPrice = Number(element.Fifo[5].Price);
-      let remainingFifoAmount = Number(prevLevel.LevelFifo[2].Amount);
+      let remainingFifoAmount = Number(prevLevel.RemainingFifo[2].Amount);
       let remainingFifoPrice = Number(element.Fifo[5].Price);
       let amountLessThanZero =
         Number(remainingFifoAmount) + Number(currentSellAmount);
@@ -724,14 +725,14 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
             ConsumedFifo: {
               id: prevLevel.LevelFifo[0].id,
               Token: element.Fifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: element.Fifo[2].Amount,
+              Date: prevLevel.LevelFifo[3].Created_Date,
             },
             RemainingFifo: {
               id: prevLevel.LevelFifo[0].id,
               Token: element.Fifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: amountLessThanZero,
+              Date: prevLevel.LevelFifo[3].Created_Date,
             },
           },
           create: {
@@ -746,14 +747,14 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
             ConsumedFifo: {
               id: prevLevel.LevelFifo[0].id,
               Token: element.Fifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: element.Fifo[2].Amount,
+              Date: prevLevel.LevelFifo[3].Created_Date,
             },
             RemainingFifo: {
               id: prevLevel.LevelFifo[0].id,
               Token: element.Fifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
               Amount: amountLessThanZero,
+              Date: prevLevel.LevelFifo[3].Created_Date,
             },
           },
         });

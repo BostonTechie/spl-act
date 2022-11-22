@@ -42,7 +42,7 @@ model Fifo {
   RemainingFifo Json?
   accountingJE  AccountingJE[]
   sPLId         Int?
-  SPL           SPL?           @relation(fields: [sPLId], references: [id])
+  SPL           SPL?           @relation(fields: [sPLId], references: [id], onDelete: SetDefault, onUpdate: SetDefault)
 }
 
 model Listing_Account {
@@ -71,8 +71,8 @@ model AccountingJE {
   FifoDBid     Int
   Duration     String?
   Notes        String?
-  SPL          SPL       @relation(fields: [CryptoDBid], references: [id])
-  Fifo         Fifo      @relation(fields: [FifoDBid], references: [id])
+  SPL          SPL       @relation(fields: [CryptoDBid], references: [id], onDelete: SetDefault, onUpdate: SetDefault)
+  Fifo         Fifo      @relation(fields: [FifoDBid], references: [id], onDelete: SetDefault, onUpdate: SetDefault)
 }
 
 model Ledger {
