@@ -44,329 +44,6 @@ export function fifoPrompt() {
     }
   });
 }
-
-async function cumBuy() {
-  console.log("🌟🌟🌟 starting calc of cumulative sum");
-  /* 
-     Grab all the unique accounts
-     to loop thrugh later in function
-    */
-
-  const findAllAccounts = await prisma.listing_Account.findMany({
-    select: {
-      Account: true,
-    },
-  });
-
-  /* 
-    get all unique Tokens to loop
-    through later in the function
-  */
-  const findAllTokens = await prisma.listing_Token.findMany({
-    select: {
-      Token: true,
-    },
-  });
-
-  /* 
-    Loop through all of the Token names buy 
-    account and calculate the cumulative buy
-    for Fifo purposes
-  */
-
-  for (let accountName of findAllAccounts) {
-    for (let TokenName of findAllTokens) {
-      let sumOfBuyfromWallet = await prisma.sPL.findMany({
-        orderBy: {
-          id: "asc",
-        },
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-          Buy_or_Sell: "Buy",
-        },
-        select: {
-          id: true,
-          Created_Date: true,
-          Amount: true,
-        },
-        // take: 2,
-      });
-
-      let currentSumAmount = 0;
-      let previousSumAmount = 0;
-
-      /* 
-        store the previous sum amount
-        add in the amount from the current buy record
-        in the DB
-      */
-      for (let uniqueID of sumOfBuyfromWallet) {
-        previousSumAmount = currentSumAmount;
-        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
-
-        await prisma.sPL.update({
-          where: {
-            id: uniqueID.id,
-          },
-          data: {
-            Cumulative_Buy: currentSumAmount,
-          },
-        });
-      }
-    }
-  }
-
-  /* 
-    run script to pop
-    previous buy column,
-    which must be run after the cumlative
-    column is calculated
- */
-  prevCumBuy();
-}
-
-async function prevCumBuy() {
-  /* 
-     Grab all the unique accounts
-     to loop thrugh later in function
-    */
-
-  const findAllAccounts = await prisma.listing_Account.findMany({
-    select: {
-      Account: true,
-    },
-  });
-
-  /* 
-    get all uniquey Tokens to loop
-    through later in the function
-  */
-  const findAllTokens = await prisma.listing_Token.findMany({
-    select: {
-      Token: true,
-    },
-  });
-
-  /* 
-    Loop through all of the Token names buy 
-    account and calculate the cumulative buy
-    for Fifo purposes
-  */
-
-  for (let accountName of findAllAccounts) {
-    for (let TokenName of findAllTokens) {
-      let previousBuy = 0;
-
-      let sumOfBuyfromWallet = await prisma.sPL.findMany({
-        orderBy: {
-          id: "asc",
-        },
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-          Buy_or_Sell: "Buy",
-        },
-        select: {
-          id: true,
-          Created_Date: true,
-          Amount: true,
-          Cumulative_Buy: true,
-        },
-        // take: 2,
-      });
-
-      /* 
-        store the previous sum amount
-        add in the amount from the current buy record
-        in the DB
-      */
-      for (let uniqueID of sumOfBuyfromWallet) {
-        await prisma.sPL.update({
-          where: {
-            id: uniqueID.id,
-          },
-          data: {
-            Prev_Cumulative_Buy: previousBuy,
-          },
-        });
-        previousBuy = Number(uniqueID.Cumulative_Buy);
-      }
-    }
-  }
-  console.log("👍👍👍 cumulative sum complete");
-  fifoPrompt();
-}
-
-async function cumSell() {
-  console.log("🌟🌟🌟 starting calc of cumulative sell");
-  /* 
-    Grab all the unique accounts
-    to loop thrugh later in function
-  */
-
-  const findAllAccounts = await prisma.listing_Account.findMany({
-    select: {
-      Account: true,
-    },
-  });
-
-  /* 
-    get all unique Tokens to loop
-    through later in the function
-  */
-  const findAllTokens = await prisma.listing_Token.findMany({
-    select: {
-      Token: true,
-    },
-  });
-
-  /* 
-    Loop through all of the Token names buy 
-    account and calculate the cumulative buy
-    for Fifo purposes
-  */
-
-  for (let accountName of findAllAccounts) {
-    for (let TokenName of findAllTokens) {
-      let rxTheImportedBalance = await prisma.sPL.findMany({
-        /* 
-          Might need to order on something 
-          other than ID, Date would be preferable 
-          if Postgres can sucessfully import 
-          seconds/ milliseconds
-        */
-        orderBy: {
-          id: "asc",
-        },
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-          Buy_or_Sell: "Sell",
-        },
-        select: {
-          id: true,
-          Created_Date: true,
-          Amount: true,
-        },
-        //take: 2,
-      });
-
-      let currentSumAmount = 0;
-      let previousSumAmount = 0;
-
-      /* 
-        store the previous sum amount
-        add in the amount from the current buy record
-        in the DB
-      */
-      for (let uniqueID of rxTheImportedBalance) {
-        /* 
-          Update previous sum to equal current sum
-          then update current sum to equal
-          curent sum plus amount in this row in 
-          table Spl Column amount
-        */
-        previousSumAmount = currentSumAmount;
-        currentSumAmount = Number(currentSumAmount) + Number(uniqueID.Amount);
-
-        await prisma.sPL.update({
-          where: {
-            id: uniqueID.id,
-          },
-          data: {
-            Cumulative_Sell: currentSumAmount,
-          },
-        });
-      }
-    }
-  }
-  /* 
-  run script to pop
-  previous buy column,
-  which must be run after the cumlative
-  column is calculated
-*/
-  prevCumSell();
-}
-
-async function prevCumSell() {
-  /* 
-     Grab all the unique accounts
-     to loop thrugh later in function
-    */
-
-  const findAllAccounts = await prisma.listing_Account.findMany({
-    select: {
-      Account: true,
-    },
-  });
-
-  /* 
-    get all uniquey Tokens to loop
-    through later in the function
-  */
-  const findAllTokens = await prisma.listing_Token.findMany({
-    select: {
-      Token: true,
-    },
-  });
-
-  /* 
-    Loop through all of the Token names buy 
-    account and calculate the cumulative buy
-    for Fifo purposes
-  */
-
-  for (let accountName of findAllAccounts) {
-    for (let TokenName of findAllTokens) {
-      let previousSell = 0;
-      /* 
-       Might need to order on something 
-       other than ID, Date would be preferable 
-       if Postgres can sucessfully import 
-       seconds/ milliseconds
-      */
-      let rxTheImportedBalance = await prisma.sPL.findMany({
-        orderBy: {
-          id: "asc",
-        },
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-          Buy_or_Sell: "Sell",
-        },
-        select: {
-          id: true,
-          Created_Date: true,
-          Amount: true,
-          Cumulative_Sell: true,
-        },
-        // take: 2,
-      });
-
-      /* 
-        store the previous sum amount
-        add in the amount from the current sell record
-        in the DB
-      */
-      for (let uniqueID of rxTheImportedBalance) {
-        await prisma.sPL.update({
-          where: {
-            id: uniqueID.id,
-          },
-          data: {
-            Prev_Cumulative_Sell: previousSell,
-          },
-        });
-        previousSell = Number(uniqueID.Cumulative_Sell);
-      }
-    }
-  }
-  console.log("👍👍👍 cumulative sell complete");
-  fifoPrompt();
-}
-
 async function rxBalance() {
   console.log("🌟🌟🌟 starting calc of RXBalance");
   /* 
@@ -645,7 +322,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       Fifo: true,
       LevelFifo: true,
     },
-    take: 5,
+    // take: 5,
   });
 
   for (let thisRowofFifo of findFifoTransaction) {
@@ -654,16 +331,19 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     {
       id: 2,
       Fifo: {
-        id: 2,
-        Price: '0.000921',
-        Token: 'DEC',
-        inUSD: '-0.015054',
-        Amount: '-16.345',
-        Account: 'Aggroed',
-        Buy_or_Sell: 'Sell',
-        Created_Date: '2020-10-24T00:00:00.000Z',
-        Internal_or_External: 'External'
-      }
+      "id": 1,
+      "Price": "0",
+      "Token": "DEC",
+      "inUSD": "0",
+      "Amount": "50914",
+      "Account": "Aggroed",
+      "Buy_or_Sell": "Buy",
+      "Created_Date": "2020-06-11T00:00:00.000Z",
+      "Original_Type": "Buy",
+      "Original_Price": "0",
+      "Original_Amount": "50914",
+      "Remaining_Amount": "50914",
+      "Internal_or_External": "External"
     } 
    */
 
@@ -697,6 +377,9 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       let amountNotLessThanZero =
         Number(LevelFifoAmount) + Number(currentSellAmount);
       let costBasis = 0;
+      let accumRealized = 0;
+      let countofSell = 0;
+      let maxRemainSell = Number(prevLevel.LevelFifo["Remaining_Amount"]);
 
       if (amountNotLessThanZero > 0) {
         /* 
@@ -761,6 +444,76 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
           },
         });
       }
+
+      if (amountNotLessThanZero < 0) {
+        /* 
+         This if controls the use
+         case where a sell consumes at least one
+         or more levels of the Remaining Fifo
+        */
+
+        /* 
+          calcualte realized gain/ loss in the case that
+          the sell doesn't fully consume the FIFO level
+        */
+        costBasis = maxRemainSell * LevelFifoPrice;
+        let soldInUSD = currentPrice * maxRemainSell;
+        let calcRealizedCurrentLine = soldInUSD - costBasis;
+        accumRealized = accumRealized + calcRealizedCurrentLine;
+        countofSell = currentSellAmount;
+
+        console.log(
+          "Previous Level ",
+          thisRowofFifo,
+          amountNotLessThanZero,
+          "accumulated realized",
+          accumRealized,
+          "max sell: ",
+          maxRemainSell,
+          "earnings ",
+          soldInUSD,
+          "remain to sell",
+          countofSell
+        );
+      }
+    }
+
+    if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Buy") {
+      /* 
+        When you grab the current sell trans
+        you have to then grab the level of FIFO
+        that is currently being consumed i.e. the id of 
+        LevelFifo (column in DB) - 1
+      */
+      let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
+
+      let prevLevel = await prisma.fifo.findUnique({
+        where: {
+          id: prevId,
+        },
+        select: {
+          LevelFifo: true,
+        },
+      });
+
+      /* 
+        Define the got variables 
+        as Typescript numbers
+      */
+
+      await prisma.fifo.upsert({
+        where: {
+          id: thisRowofFifo.id,
+        },
+        update: {
+          Realized: 0.0,
+          LevelFifo: prevLevel.LevelFifo,
+        },
+        create: {
+          Realized: 0.0,
+          LevelFifo: prevLevel.LevelFifo,
+        },
+      });
     }
   }
 }
