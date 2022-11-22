@@ -518,17 +518,23 @@ async function fifoUpdateColumn() {
         */
 
         let jsonUpdateCol = [
-          { id: uniqueID.id },
-          { Token: uniqueID.Token },
-          { Amount: uniqueID.Amount },
-          { Created_Date: uniqueID.Created_Date },
-          { Account: uniqueID.Account },
-          { Price: uniqueID.Price },
-          { inUSD: uniqueID.inUSD },
-          { Buy_or_Sell: uniqueID.Buy_or_Sell },
-          { Internal_or_External: uniqueID.Internal_or_External },
-        ] as Prisma.JsonArray;
+          {
+            id: uniqueID.id,
+            Token: uniqueID.Token,
+            Amount: uniqueID.Amount,
+            Original_Amount: uniqueID.Amount,
+            Consumed_Amount: 0,
+            Remaining_Amount: uniqueID.Amount,
+            Created_Date: uniqueID.Created_Date,
+            Account: uniqueID.Account,
+            Price: uniqueID.Price,
+            inUSD: uniqueID.inUSD,
+            Buy_or_Sell: uniqueID.Buy_or_Sell,
+            Internal_or_External: uniqueID.Internal_or_External,
+          },
+        ] as unknown as Prisma.JsonObject;
 
+        let getZeroArray = jsonUpdateCol[0];
         /* 
           create an array to use as filter later 
           in this function to loop through
@@ -550,10 +556,8 @@ async function fifoUpdateColumn() {
               id: uniqueID.id,
             },
             update: {
-              Fifo: jsonUpdateCol,
-              LevelFifo: jsonUpdateCol,
-              ConsumedFifo: { Buy_or_Sell: "Buy" },
-              RemainingFifo: jsonUpdateCol,
+              Fifo: getZeroArray,
+              LevelFifo: getZeroArray,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -561,10 +565,8 @@ async function fifoUpdateColumn() {
               },
             },
             create: {
-              Fifo: jsonUpdateCol,
-              LevelFifo: jsonUpdateCol,
-              ConsumedFifo: { Buy_or_Sell: "Buy" },
-              RemainingFifo: jsonUpdateCol,
+              Fifo: getZeroArray,
+              LevelFifo: getZeroArray,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -585,7 +587,7 @@ async function fifoUpdateColumn() {
               id: uniqueID.id,
             },
             update: {
-              Fifo: jsonUpdateCol,
+              Fifo: getZeroArray,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -593,7 +595,7 @@ async function fifoUpdateColumn() {
               },
             },
             create: {
-              Fifo: jsonUpdateCol,
+              Fifo: getZeroArray,
               SPL: {
                 connect: {
                   id: uniqueID.id,
@@ -616,17 +618,16 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     as the function rolls through time it calcs the
     realized gains for any Sell based on the first
     item (FIFO) queued in the JSON array,
-    every new buy adds a new "level" to the que of FIFO
-    JSON array
+    every new  buy adds a new "level" to the que of FIFO
+    JSON array  
   */
 
-  /* 
-     Grab all the unique transactions
-     that are not the first level
-     of the FIFO functions
-    */
-
   let findFifoTransaction = await prisma.fifo.findMany({
+    /* 
+      Grab all the unique transactions
+      that are not the first level
+       of the FIFO functions
+    */
     orderBy: {
       id: "asc",
     },
@@ -642,119 +643,102 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       Fifo: true,
       LevelFifo: true,
     },
-    // take: 1,
+    take: 1,
   });
 
-  for (let element of findFifoTransaction) {
+  for (let thisRowofFifo of findFifoTransaction) {
     /* 
-      here is how to grab element pieces in this loop:
-        element.Fifo[0].id
-        element.Fifo[1].Token
-        element.Fifo[2].Amount
-        element.Fifo[3].Created_Date
-        element.Fifo[4].Account
-        element.Fifo[5].Price
-        element.Fifo[6].inUSD
-        element.Fifo[7].Buy_or_Sell
-        element.Fifo[8].Internal_or_External
+    Data Structure:
+    {
+      id: 2,
+      Fifo: {
+        id: 2,
+        Price: '0.000921',
+        Token: 'DEC',
+        inUSD: '-0.015054',
+        Amount: '-16.345',
+        Account: 'Aggroed',
+        Buy_or_Sell: 'Sell',
+        Created_Date: '2020-10-24T00:00:00.000Z',
+        Internal_or_External: 'External'
+      }
+    } 
+   */
 
-        prevLevel.LevelFifo[0].id
-        prevLevel.LevelFifo[1].Token
-        prevLevel.LevelFifo[2].Amount
-        prevLevel.LevelFifo[3].Created_Date
-        prevLevel.LevelFifo[4].Account
-        prevLevel.LevelFifo[5].Price
-        prevLevel.LevelFifo[6].inUSD
-        prevLevel.LevelFifo[7].Buy_or_Sell
-        prevLevel.LevelFifo[8].Internal_or_External
-
-    */
-
-    if (element.Fifo[7].Buy_or_Sell === "Sell") {
+    if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Sell") {
       /* 
-        find the previous level of Fifo
-        and update accordingly for what a "sell" entails
+        When you grab the current sell trans
+        you have to then grab the level of FIFO
+        that is currently being consumed i.e. the id of 
+        LevelFifo (column in DB) - 1
       */
-
-      let prevID = element.Fifo[0].id - 1;
+      let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
 
       let prevLevel = await prisma.fifo.findUnique({
         where: {
-          id: prevID,
+          id: prevId,
         },
         select: {
           LevelFifo: true,
-          RemainingFifo: true,
         },
       });
 
       /* 
-        Define some variables for calulation ease
-
+        Define the got variables 
+        as Typescript numbers
       */
-      let currentSellAmount = Number(element.Fifo[2].Amount);
-      let currentPrice = Number(element.Fifo[5].Price);
-      let remainingFifoAmount = Number(prevLevel.RemainingFifo[2].Amount);
-      let remainingFifoPrice = Number(element.Fifo[5].Price);
-      let amountLessThanZero =
-        Number(remainingFifoAmount) + Number(currentSellAmount);
+
+      let currentSellAmount = Number(thisRowofFifo.Fifo["Amount"]);
+      let currentPrice = Number(thisRowofFifo.Fifo["Price"]);
+      let LevelFifoAmount = Number(prevLevel.LevelFifo["Remaining_Amount"]);
+      let LevelFifoPrice = Number(prevLevel.LevelFifo["Price"]);
+      let amountNotLessThanZero =
+        Number(LevelFifoAmount) + Number(currentSellAmount);
       let costBasis = 0;
 
-      if (amountLessThanZero >= 0) {
+      if (amountNotLessThanZero > 0) {
         /* 
-          calcualte realized gain/ loss in the case that
-          the sell doesn't fully consume the FIFO level
-        */
-        costBasis = currentSellAmount * remainingFifoPrice;
+              calcualte realized gain/ loss in the case that
+              the sell doesn't fully consume the FIFO level
+            */
+        costBasis = currentSellAmount * LevelFifoPrice;
         let soldInUSD = currentPrice * currentSellAmount;
-        let realized = soldInUSD - costBasis;
+        let calcRealized = soldInUSD - costBasis;
 
         await prisma.fifo.upsert({
           where: {
-            id: element.Fifo[0].id,
+            id: thisRowofFifo.id,
           },
           update: {
-            Realized: realized,
+            Realized: calcRealized,
             LevelFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: prevLevel.LevelFifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
-              Price: prevLevel.LevelFifo[5].Price,
-              InUSd: prevLevel.LevelFifo[6].inUSD,
-            },
-            ConsumedFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].Token,
-              Amount: element.Fifo[2].Amount,
-              Date: prevLevel.LevelFifo[3].Created_Date,
-            },
-            RemainingFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].Token,
-              Amount: amountLessThanZero,
-              Date: prevLevel.LevelFifo[3].Created_Date,
+              id: prevLevel.LevelFifo["id"],
+              Price: prevLevel.LevelFifo["Price"],
+              Token: prevLevel.LevelFifo["Token"],
+              inUSD: prevLevel.LevelFifo["inUSD"],
+              Original_Amount: prevLevel.LevelFifo["Amount"],
+              Consumed_Amount: thisRowofFifo.Fifo["Amount"],
+              Remaining_Amount: amountNotLessThanZero,
+              Account: prevLevel.LevelFifo["Account"],
+              Buy_or_Sell: prevLevel.LevelFifo["Buy_or_Sell"],
+              Created_Date: prevLevel.LevelFifo["Created_Date"],
+              Internal_or_External: prevLevel.LevelFifo["Internal_or_External"],
             },
           },
           create: {
-            Realized: realized,
+            Realized: calcRealized,
             LevelFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: prevLevel.LevelFifo[1].Token,
-              Date: prevLevel.LevelFifo[3].Created_Date,
-              Price: prevLevel.LevelFifo[5].Price,
-              InUSd: prevLevel.LevelFifo[6].inUSD,
-            },
-            ConsumedFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].Token,
-              Amount: element.Fifo[2].Amount,
-              Date: prevLevel.LevelFifo[3].Created_Date,
-            },
-            RemainingFifo: {
-              id: prevLevel.LevelFifo[0].id,
-              Token: element.Fifo[1].Token,
-              Amount: amountLessThanZero,
-              Date: prevLevel.LevelFifo[3].Created_Date,
+              id: prevLevel.LevelFifo["id"],
+              Price: prevLevel.LevelFifo["Price"],
+              Token: prevLevel.LevelFifo["Token"],
+              inUSD: prevLevel.LevelFifo["inUSD"],
+              Original_Amount: prevLevel.LevelFifo["Amount"],
+              Consumed_Amount: thisRowofFifo.Fifo["Amount"],
+              Remaining_Amount: amountNotLessThanZero,
+              Account: prevLevel.LevelFifo["Account"],
+              Buy_or_Sell: prevLevel.LevelFifo["Buy_or_Sell"],
+              Created_Date: prevLevel.LevelFifo["Created_Date"],
+              Internal_or_External: prevLevel.LevelFifo["Internal_or_External"],
             },
           },
         });
