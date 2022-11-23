@@ -372,13 +372,13 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
 
       let currentSellAmount = Number(thisRowofFifo.Fifo["Amount"]);
       let currentPrice = Number(thisRowofFifo.Fifo["Price"]);
-      let LevelFifoAmount = Number(prevLevel.LevelFifo["Remaining_Amount"]);
-      let LevelFifoPrice = Number(prevLevel.LevelFifo["Original_Price"]);
+      let prevLevelFifoAmount = Number(prevLevel.LevelFifo["Remaining_Amount"]);
+      let prevLevelFifoPrice = Number(prevLevel.LevelFifo["Original_Price"]);
       let amountNotLessThanZero =
-        Number(LevelFifoAmount) + Number(currentSellAmount);
+        Number(prevLevelFifoAmount) + Number(currentSellAmount);
       let costBasis = 0;
-      let accumRealized = 0;
-      let countofSell = 0;
+      let accumulateRealized = 0;
+      let leftToSell = 0;
       let maxRemainSell = Number(prevLevel.LevelFifo["Remaining_Amount"]);
 
       if (amountNotLessThanZero > 0) {
@@ -386,17 +386,17 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
               calcualte realized gain/ loss in the case that
               the sell doesn't fully consume the FIFO level
             */
-        costBasis = currentSellAmount * LevelFifoPrice;
+        costBasis = currentSellAmount * prevLevelFifoPrice;
         let soldInUSD = currentPrice * currentSellAmount;
         let calcRealized = soldInUSD - costBasis;
 
-        console.log(
-          `id: ${thisRowofFifo.Fifo["id"]} 
-          sell price: ${currentPrice} 
-          fifo Price: ${LevelFifoPrice}
-          sell amount: ${currentSellAmount} 
-          Remaining Amount: ${amountNotLessThanZero}`
-        );
+        // console.log(
+        //   `id: ${thisRowofFifo.Fifo["id"]}
+        //   sell price: ${currentPrice}
+        //   fifo Price: ${prevLevelFifoPrice}
+        //   sell amount: ${currentSellAmount}
+        //   Remaining Amount: ${amountNotLessThanZero}`
+        // );
 
         await prisma.fifo.upsert({
           where: {
@@ -446,35 +446,46 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       }
 
       if (amountNotLessThanZero < 0) {
+        let previousId = Number(prevLevel.LevelFifo["id"]);
         /* 
-         This if controls the use
+         This "if" statment controls the use
          case where a sell consumes at least one
          or more levels of the Remaining Fifo
         */
 
         /* 
-          calcualte realized gain/ loss in the case that
-          the sell doesn't fully consume the FIFO level
+          in the case your sell
+          consumes multiple levels of buys
+          this script tracks what the total sell is
+          versus the size of the buy in the given
+          level of FIFO
         */
-        costBasis = maxRemainSell * LevelFifoPrice;
-        let soldInUSD = currentPrice * maxRemainSell;
-        let calcRealizedCurrentLine = soldInUSD - costBasis;
-        accumRealized = accumRealized + calcRealizedCurrentLine;
-        countofSell = currentSellAmount;
+        leftToSell = -currentSellAmount - maxRemainSell;
 
-        console.log(
-          "Previous Level ",
-          thisRowofFifo,
-          amountNotLessThanZero,
-          "accumulated realized",
-          accumRealized,
-          "max sell: ",
-          maxRemainSell,
-          "earnings ",
-          soldInUSD,
-          "remain to sell",
-          countofSell
-        );
+        /* 
+          calcualte realized gain/ loss in the case that
+          the sell  consumes the current FIFO level
+        */
+        costBasis = maxRemainSell * prevLevelFifoPrice;
+        let soldInUSD = currentPrice * maxRemainSell;
+        let calcRealized = soldInUSD - costBasis;
+        accumulateRealized = accumulateRealized + calcRealized;
+
+        console.log(previousId + 1);
+
+        let nextBuy = await prisma.fifo.findFirst({
+          orderBy: {
+            id: "asc",
+          },
+          where: {
+            id: {
+              gt: previousId + 1,
+            },
+            Fifo:{"Buy_or_Sell":"Buy"},
+            },
+          },
+        });
+        console.log(nextBuy);
       }
     }
 
