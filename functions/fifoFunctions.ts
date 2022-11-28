@@ -451,29 +451,18 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
       }
 
       if (amountNotLessThanZero < 0) {
-        /* 
-         This "if" statment controls the use
-         case where a sell consumes at least one
-         or more levels of the Remaining Fifo
-        */
         let i = 0;
+        leftToSell = currentSellAmount + maxRemainSell;
         while (i != 5) {
-          //   /*
-          //   in the case your sell
-          //   consumes multiple levels of buys
-          //   this script tracks what the total sell is
-          //   versus the size of the buy in the givencle
-          //   level of FIFO
-          // */
+          /*
+           in the case your sell
+           consumes multiple levels of buys
+           this script tracks what the total sell is
+           versus the size of the buy in the givencle
+           level of FIFO
+          */
 
           let nextBuyId = Number(prevLevel.LevelFifo["id"] + i);
-          leftToSell = -currentSellAmount - maxRemainSell;
-
-          /*
-            calcualte realized gain/ loss in the case that
-            the sell  consumes the current FIFO level
-          */
-          costBasis = maxRemainSell * prevLevelFifoPrice;
           let soldInUSD = currentPrice * maxRemainSell;
           let calcRealized = soldInUSD - costBasis;
           accumulateRealized = accumulateRealized + calcRealized;
@@ -504,37 +493,69 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
             },
             where: {
               id: {
-                gt: nextBuyId,
+                gte: nextBuyId,
               },
               Buy_or_Sell: "Buy",
             },
           });
 
           if (i > 0) {
-            multiSellArray.push({
-              id: nextBuyId,
-              Original_Price: nextBuy.Fifo["Original_Price"],
-              Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-              Token: nextBuy.Fifo["Token"],
-              inUSD: nextBuy.Fifo["inUSD"],
-              Original_Amount: nextBuy.Fifo["Amount"],
-              Consumed_Amount_For_This_Sale: maxRemainSell,
-              Remaining_Amount: prevLevelFifoAmount - maxRemainSell,
-              Account: nextBuy.Fifo["Account"],
-              Original_Type: prevLevel.LevelFifo["Original_Type"],
-              Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-              FIFO_Date: nextBuy.Fifo["Created_Date"],
-              Sale_Date: thisRowofFifo.Fifo["Created_Date"],
-              Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
-              Realized: calcRealized,
-            });
+            if (-leftToSell >= nextBuy.Fifo["Original_Amount"]) {
+              maxRemainSell = nextBuy.Fifo["Original_Amount"];
+
+              multiSellArray.push({
+                id: nextBuyId,
+                currentSellAmount: currentSellAmount,
+                leftToSell: leftToSell,
+                Original_Price: nextBuy.Fifo["Original_Price"],
+                Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+                Token: nextBuy.Fifo["Token"],
+                inUSD: nextBuy.Fifo["inUSD"],
+                Original_Amount: nextBuy.Fifo["Amount"],
+                Consumed_Amount_For_This_Sale: maxRemainSell,
+                Remaining_Amount: 0,
+                Account: nextBuy.Fifo["Account"],
+                Original_Type: prevLevel.LevelFifo["Original_Type"],
+                Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+                FIFO_Date: nextBuy.Fifo["Created_Date"],
+                Sale_Date: thisRowofFifo.Fifo["Created_Date"],
+                Internal_or_External:
+                  thisRowofFifo.Fifo["Internal_or_External"],
+                Realized: calcRealized,
+              });
+
+              leftToSell = leftToSell + Number(maxRemainSell);
+            } else {
+              maxRemainSell =
+                Number(nextBuy.Fifo["Original_Amount"]) + leftToSell;
+
+              multiSellArray.push({
+                id: nextBuyId,
+                currentSellAmount: currentSellAmount,
+                leftToSell: leftToSell,
+                Original_Price: nextBuy.Fifo["Original_Price"],
+                Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+                Token: nextBuy.Fifo["Token"],
+                inUSD: nextBuy.Fifo["inUSD"],
+                Original_Amount: nextBuy.Fifo["Amount"],
+                Consumed_Amount_For_This_Sale:
+                  Number(nextBuy.Fifo["Amount"]) - maxRemainSell,
+                Remaining_Amount: maxRemainSell,
+                Account: nextBuy.Fifo["Account"],
+                Original_Type: prevLevel.LevelFifo["Original_Type"],
+                Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+                FIFO_Date: nextBuy.Fifo["Created_Date"],
+                Sale_Date: thisRowofFifo.Fifo["Created_Date"],
+                Internal_or_External:
+                  thisRowofFifo.Fifo["Internal_or_External"],
+                Realized: calcRealized,
+              });
+            }
           }
-          // console.log("multi sell array", multiSellArray);
 
           i++;
-
-          console.log("next buy", nextBuy);
         }
+        console.log(multiSellArray);
       }
     }
 
