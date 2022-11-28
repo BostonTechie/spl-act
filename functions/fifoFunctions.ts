@@ -452,8 +452,9 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
 
       if (amountNotLessThanZero < 0) {
         let i = 0;
+        let myNull = "notnull";
         leftToSell = currentSellAmount + maxRemainSell;
-        while (i != 5) {
+        while (myNull === "notnull") {
           /*
            in the case your sell
            consumes multiple levels of buys
@@ -550,12 +551,28 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
                   thisRowofFifo.Fifo["Internal_or_External"],
                 Realized: calcRealized,
               });
+              myNull = "cancel while loop found all the buys we need";
+
+              // console.log(nextBuy.id);
+              let typeCO = Number(nextBuy.id) + 1;
+              // let arrayLength = multiSellArray.length - 1;
+              // console.log(multiSellArray[arrayLength]);
+
+              let logthis = await prisma.fifo.upsert({
+                where: {
+                  id: typeCO,
+                },
+                create: {
+                  LevelFifo: multiSellArray,
+                },
+                update: { LevelFifo: multiSellArray },
+              });
             }
           }
 
           i++;
         }
-        console.log(multiSellArray);
+        // console.log(multiSellArray);
       }
     }
 
