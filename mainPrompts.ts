@@ -2,7 +2,6 @@ const { NumberPrompt } = require("enquirer");
 import { columnPrompt } from "./functions/columnFunctions";
 import { tablePrompt } from "./functions/tableFunctions";
 import { fifoPrompt } from "./functions/fifoFunctions";
-import { JsonPrompt } from "./functions/testofFifo";
 
 export function mainPrompt() {
   /*
@@ -41,7 +40,6 @@ export function mainPrompt() {
     }
     if (answer === 3) {
       answer = null;
-      JsonPrompt();
     }
   });
 }
