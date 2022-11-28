@@ -550,6 +550,7 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
                 Internal_or_External:
                   thisRowofFifo.Fifo["Internal_or_External"],
                 Realized: calcRealized,
+                AccumulateRealized: accumulateRealized,
               });
               myNull = "cancel while loop found all the buys we need";
 
@@ -563,10 +564,12 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
                 create: {
                   LevelFifo: multiSellArray[arrayLength],
                   MultiLevelFifo: multiSellArray,
+                  Realized: accumulateRealized,
                 },
                 update: {
                   LevelFifo: multiSellArray[arrayLength],
                   MultiLevelFifo: multiSellArray,
+                  Realized: accumulateRealized,
                 },
               });
             }
