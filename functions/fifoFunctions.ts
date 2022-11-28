@@ -553,11 +553,10 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
               });
               myNull = "cancel while loop found all the buys we need";
 
-              // console.log(nextBuy.id);
               let typeCO = Number(nextBuy.id) + 1;
               let arrayLength = multiSellArray.length - 1;
 
-              let logthis = await prisma.fifo.upsert({
+              await prisma.fifo.upsert({
                 where: {
                   id: typeCO,
                 },
