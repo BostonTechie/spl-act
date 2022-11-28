@@ -555,17 +555,20 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
 
               // console.log(nextBuy.id);
               let typeCO = Number(nextBuy.id) + 1;
-              // let arrayLength = multiSellArray.length - 1;
-              // console.log(multiSellArray[arrayLength]);
+              let arrayLength = multiSellArray.length - 1;
 
               let logthis = await prisma.fifo.upsert({
                 where: {
                   id: typeCO,
                 },
                 create: {
-                  LevelFifo: multiSellArray,
+                  LevelFifo: multiSellArray[arrayLength],
+                  MultiLevelFifo: multiSellArray,
                 },
-                update: { LevelFifo: multiSellArray },
+                update: {
+                  LevelFifo: multiSellArray[arrayLength],
+                  MultiLevelFifo: multiSellArray,
+                },
               });
             }
           }
