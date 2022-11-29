@@ -24,10 +24,6 @@ model SPL {
   inUSD                Decimal?       @db.Decimal(65, 6)
   Buy_or_Sell          String?        @map("Buy/Sell")
   Internal_or_External String?        @map("Internal/External")
-  Cumulative_Buy       Decimal?       @db.Decimal(65, 6)
-  Prev_Cumulative_Buy  Decimal?       @db.Decimal(65, 6)
-  Cumulative_Sell      Decimal?       @db.Decimal(65, 6)
-  Prev_Cumulative_Sell Decimal?       @db.Decimal(65, 6)
   BalanceRX            Decimal?       @db.Decimal(65, 6)
   AccountingJE         AccountingJE[]
   Fifo                 Fifo[]

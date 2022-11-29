@@ -1,6 +1,7 @@
 import prisma from "../prisma/client";
 const { NumberPrompt } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
+import { emit } from "process";
 
 export function columnPrompt() {
   //controls the scripting in this page "columnCalc"
@@ -24,7 +25,7 @@ export function columnPrompt() {
     }
     if (answer === 1) {
       answer = null;
-      generateListingAccount();
+      generateListingToken();
     }
     if (answer === 2) {
       answer = null;
@@ -97,38 +98,37 @@ async function internalExternalColumn() {
     },
   });
 
-  for (let element of findInternalTransactions) {
-    await prisma.sPL.updateMany({
-      where: {
-        From: element.Account,
-      },
-      data: {
-        Internal_or_External: "Internal",
-      },
-    });
+  let myArrayforInternal = [];
 
-    await prisma.sPL.updateMany({
-      where: {
-        NOT: {
-          From: element.Account,
+  findInternalTransactions.forEach((element) => {
+    myArrayforInternal.push(element.Account);
+  });
+
+  await prisma.sPL.updateMany({
+    where: {
+      From: {
+        in: myArrayforInternal,
+      },
+    },
+    data: {
+      Internal_or_External: "Internal",
+    },
+  });
+
+  await prisma.sPL.updateMany({
+    where: {
+      NOT: {
+        From: {
+          in: myArrayforInternal,
         },
       },
-      data: {
-        Internal_or_External: "External",
-      },
-    });
+    },
+    data: {
+      Internal_or_External: "External",
+    },
+  });
 
-    await prisma.sPL.updateMany({
-      where: {
-        From: null,
-      },
-      data: {
-        Internal_or_External: "External",
-      },
-    });
-  }
   console.log("👍👍👍 internal/external column complete");
-  columnPrompt();
 }
 
 async function lookupDECPriceHistory() {
@@ -151,7 +151,9 @@ async function lookupDECPriceHistory() {
   /*
    i update the prices for all tranactions
    that I have no data for below, 
-   this number or assumption could be wrong talk to Jesse 
+   before this date (approx) in game currency
+   was not on the blockchain and had 
+   no value
   */
 
   await prisma.sPL.updateMany({
@@ -184,7 +186,7 @@ async function lookupDECPriceHistory() {
 
   for (let element of updateSPLwithFindPriceDEC) {
     let strmonth = "";
-    let strDate = "";
+    let strDayOfMonth = "";
 
     /*
      this if controls logic for findinf prices of the DEC
@@ -192,39 +194,33 @@ async function lookupDECPriceHistory() {
        (8/10/2020)
         https://finance.yahoo.com/quote/DEC1-USD/history?period1=1594598400&period2=1666051200&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true
 
-      */
+    */
 
     let elementDate = element.Created_Date;
-    let date = elementDate.getUTCDate();
+    let dayofMonth = elementDate.getUTCDate();
     let month = elementDate.getUTCMonth();
     let year = elementDate.getUTCFullYear();
     month++;
 
     //handle the use case that day 1 - 9, needs to return 01 - 09
-    if (month < 9) {
+    if (month <= 9) {
       strmonth = "0" + month.toString();
-    }
-
-    if (month === 9) {
-      strmonth = "10";
     }
 
     if (month > 9) {
       strmonth = month.toString();
     }
 
-    if (date > 9) {
-      strDate = date.toString();
-    }
-    if (date < 10) {
-      strDate = "0" + date.toString();
+    if (dayofMonth <= 9) {
+      strDayOfMonth = "0" + dayofMonth.toString();
     }
 
-    if (date === 9) {
-      strDate = "10";
+    if (dayofMonth > 9) {
+      strDayOfMonth = dayofMonth.toString();
     }
 
-    let dateStr = year + "-" + strmonth + "-" + strDate + "T00:00:00+00:00";
+    let dateStr =
+      year + "-" + strmonth + "-" + strDayOfMonth + "T00:00:00+00:00";
 
     const lookupPricebyDate = await prisma.history_price_DEC.findMany({
       where: {
@@ -238,6 +234,8 @@ async function lookupDECPriceHistory() {
       },
     });
 
+    console.log(element, "datestr..", dateStr, "..day o m..", dayofMonth);
+
     /*
     loop through all the elements in this array
     updateSPLwithFindPriceDEC who's purpose is to find all 
@@ -245,45 +243,46 @@ async function lookupDECPriceHistory() {
     update the data line with the closing price for that day 
     */
 
-    await prisma.sPL.update({
-      where: {
-        id: element.id,
-      },
-      data: {
-        Price: lookupPricebyDate[0].Close,
-      },
-    });
+    //   await prisma.sPL.update({
+    //     where: {
+    //       id: element.id,
+    //     },
+    //     data: {
+    //       Price: lookupPricebyDate[0].Close,
+    //     },
+    //   });
+    // }
+
+    // /*
+    //  Calculate the USD equivalent price of the token,
+    //  must be run after calcDeclookup, calcSPSlookup.
+    // */
+    // const calcUSD = await prisma.sPL.findMany({
+    //   where: {
+    //     Token: "DEC",
+    //   },
+    //   select: {
+    //     id: true,
+    //     Amount: true,
+    //     Price: true,
+    //   },
+    // });
+
+    // let usdOfElement = 0.0;
+    // for (let element of calcUSD) {
+    //   usdOfElement = Number(element.Amount) * Number(element.Price);
+    //   await prisma.sPL.update({
+    //     where: {
+    //       id: element.id,
+    //     },
+    //     data: {
+    //       inUSD: usdOfElement,
+    //     },
+    //   });
+    // }
+
+    console.log("👍👍👍 DEC lookup and USD complete");
   }
-
-  /*
-   Calculate the USD equivalent price of the token,
-   must be run after calcDeclookup, calcSPSlookup.
-  */
-  const calcUSD = await prisma.sPL.findMany({
-    where: {
-      Token: "DEC",
-    },
-    select: {
-      id: true,
-      Amount: true,
-      Price: true,
-    },
-  });
-
-  let usdOfElement = 0.0;
-  for (let element of calcUSD) {
-    usdOfElement = Number(element.Amount) * Number(element.Price);
-    await prisma.sPL.update({
-      where: {
-        id: element.id,
-      },
-      data: {
-        inUSD: usdOfElement,
-      },
-    });
-  }
-
-  console.log("👍👍👍 DEC lookup and USD complete");
 }
 
 async function lookupSPSPriceHistory() {
@@ -329,7 +328,7 @@ async function lookupSPSPriceHistory() {
 
   for (let element of updateSPLwithFindPriceSPS) {
     let strmonth = "";
-    let strDate = "";
+    let strDayOfMonth = "";
 
     /*
       this if controls logic for findinf prices of the SPS token that I have found in yahoo finance, note all data is after (7/26/2021) 
@@ -337,36 +336,30 @@ async function lookupSPSPriceHistory() {
     */
 
     let elementDate = element.Created_Date;
-    let date = elementDate.getUTCDate();
+    let dayofMonth = elementDate.getUTCDate();
     let month = elementDate.getUTCMonth();
     let year = elementDate.getUTCFullYear();
     month++;
 
     //handle the use case that day 1 - 9, needs to return 01 - 09
-    if (month < 9) {
+    if (month <= 9) {
       strmonth = "0" + month.toString();
-    }
-
-    if (month === 9) {
-      strmonth = "10";
     }
 
     if (month > 9) {
       strmonth = month.toString();
     }
 
-    if (date > 9) {
-      strDate = date.toString();
-    }
-    if (date < 10) {
-      strDate = "0" + date.toString();
+    if (dayofMonth <= 9) {
+      strDayOfMonth = "0" + dayofMonth.toString();
     }
 
-    if (date === 9) {
-      strDate = "10";
+    if (dayofMonth > 9) {
+      strDayOfMonth = dayofMonth.toString();
     }
 
-    let dateStr = year + "-" + strmonth + "-" + strDate + "T00:00:00+00:00";
+    let dateStr =
+      year + "-" + strmonth + "-" + strDayOfMonth + "T00:00:00+00:00";
 
     const lookupPricebyDate = await prisma.history_price_SPS.findMany({
       where: {
