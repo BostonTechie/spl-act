@@ -25,7 +25,7 @@ export function columnPrompt() {
     }
     if (answer === 1) {
       answer = null;
-      generateListingToken();
+      generateListingAccount();
     }
     if (answer === 2) {
       answer = null;
@@ -234,7 +234,7 @@ async function lookupDECPriceHistory() {
       },
     });
 
-    console.log(element, "datestr..", dateStr, "..day o m..", dayofMonth);
+    // console.log(element, "datestr..", dateStr, "..day o m..", dayofMonth);
 
     /*
     loop through all the elements in this array
@@ -243,46 +243,49 @@ async function lookupDECPriceHistory() {
     update the data line with the closing price for that day 
     */
 
-    //   await prisma.sPL.update({
-    //     where: {
-    //       id: element.id,
-    //     },
-    //     data: {
-    //       Price: lookupPricebyDate[0].Close,
-    //     },
-    //   });
-    // }
-
-    // /*
-    //  Calculate the USD equivalent price of the token,
-    //  must be run after calcDeclookup, calcSPSlookup.
-    // */
-    // const calcUSD = await prisma.sPL.findMany({
-    //   where: {
-    //     Token: "DEC",
-    //   },
-    //   select: {
-    //     id: true,
-    //     Amount: true,
-    //     Price: true,
-    //   },
-    // });
-
-    // let usdOfElement = 0.0;
-    // for (let element of calcUSD) {
-    //   usdOfElement = Number(element.Amount) * Number(element.Price);
-    //   await prisma.sPL.update({
-    //     where: {
-    //       id: element.id,
-    //     },
-    //     data: {
-    //       inUSD: usdOfElement,
-    //     },
-    //   });
-    // }
-
-    console.log("👍👍👍 DEC lookup and USD complete");
+    await prisma.sPL.update({
+      where: {
+        id: element.id,
+      },
+      data: {
+        Price: lookupPricebyDate[0].Close,
+      },
+    });
   }
+
+  /*
+     Calculate the USD equivalent price of the token,
+     must be run after calcDeclookup, calcSPSlookup.
+    */
+  const calcUSD = await prisma.sPL.findMany({
+    where: {
+      Token: "DEC",
+    },
+    select: {
+      id: true,
+      Amount: true,
+      Price: true,
+    },
+  });
+
+  let usdOfElement = 0.0;
+  for (let element of calcUSD) {
+    usdOfElement = Number(element.Amount) * Number(element.Price);
+    await prisma.sPL.update({
+      where: {
+        id: element.id,
+      },
+      data: {
+        inUSD: usdOfElement,
+      },
+    });
+
+    if (element.id % 10000 === 0) {
+      console.log("processed through ", element.id);
+    }
+  }
+
+  console.log("👍👍👍 DEC lookup and USD complete");
 }
 
 async function lookupSPSPriceHistory() {
