@@ -157,179 +157,206 @@ async function fifoUpdateColumn() {
 
   for (let accountName of findAllAccounts) {
     for (let TokenName of findAllTokens) {
-      /* 
-        In the case that there are more than 
-        250,000 transactions this next section
-        of code will split that data into chucks
-        in order to process it, otherwise script
-        runs into error:
-         " let createFifoJson = await prisma.sPL.findMany(
-         Failed to convert rust `String` into napi `string`"
-      */
-      let countTrans = await prisma.sPL.count({
-        where: {
-          Token: TokenName.Token,
-          Account: accountName.Account,
-        },
-      });
+      let tName = TokenName.Token;
+      let aName = accountName.Account;
+      //   /*
+      //     In the case that there are more than
+      //     250,000 (batchSize) transactions this next section
+      //     of code will split that data into chucks
+      //     in order to process it, otherwise script
+      //     runs into error:
+      //      " let createFifoJson = await prisma.sPL.findMany(
+      //      Failed to convert rust `String` into napi `string`"
+      //   */
+      //   let countTrans = await prisma.sPL.count({
+      //     where: {
+      //       Token: TokenName.Token,
+      //       Account: accountName.Account,
+      //     },
+      //   });
 
-      /* 
-       Just let user know where you are
-       so they don't think script is frozen
-      */
-      let batchSize = 250000;
-      let moduloOfTransCount = countTrans % batchSize;
-      let numberOfTransCount = countTrans / batchSize;
+      //   /*
+      //    Just let user know where you are
+      //    so they don't think script is frozen
+      //   */
+      //   let batchSize = 250000;
 
-      // console.log(
-      //   "processing first level Fifo for: ",
-      //   countTrans,
-      //   "transactions",
-      //   accountName,
-      //   TokenName
-      // );
+      //   let numberOfTransCount = countTrans / batchSize;
 
-      if (Math.floor(numberOfTransCount) > 0) {
-        // console.log(moduloOfTransCount, Math.floor(numberOfTransCount));
-        let lengthOf250k = Math.floor(numberOfTransCount) + 1;
+      //   console.log(
+      //     "processing first level Fifo for: ",
+      //     countTrans,
+      //     "transactions",
+      //     accountName,
+      //     TokenName
+      //   );
 
-        for (let i = 1; i <= lengthOf250k; i++) {
-          /* 
-            In the case that there are more than 
-            250,000 transactions this next section
-            of code will split that data into chucks
-            in order to process it, otherwise script
-            runs into error:
-            " let createFifoJson = await prisma.sPL.findMany(
-            Failed to convert rust `String` into napi `string`"
-          */
-          let createFifoJson = await prisma.sPL.findMany({
-            orderBy: {
-              id: "asc",
-            },
-            where: {
-              Token: TokenName.Token,
-              Account: accountName.Account,
-            },
-            select: {
-              id: true,
-              Token: true,
-              Amount: true,
-              Created_Date: true,
-              Account: true,
-              Price: true,
-              inUSD: true,
-              Buy_or_Sell: true,
-              Internal_or_External: true,
-            },
-            // take: 1,
-          });
+      //   if (Math.floor(numberOfTransCount) > 0) {
+      //     let lengthOf250k = Math.floor(numberOfTransCount) + 1;
 
-          // i used in for loop below
-          let i = 0;
+      //     for (let countLength = 0; countLength < lengthOf250k; countLength++) {
+      //       let skipthisMany = countLength * batchSize;
 
-          for (let uniqueID of createFifoJson) {
-            /*
-              Creates a JSON to store the Original
-              values of a Buy to be used by FIFO
-            */
+      //       /*
+      //         Let user know where
+      //         script is
+      //       */
+      //       console.log(
+      //         "processing batch# ",
+      //         countLength,
+      //         " of ",
+      //         countTrans,
+      //         accountName,
+      //         TokenName
+      //       );
 
-            let jsonUpdateCol = [
-              {
-                id: uniqueID.id,
-                Token: uniqueID.Token,
-                Amount: uniqueID.Amount,
-                Original_Amount: uniqueID.Amount,
-                Remaining_Amount: uniqueID.Amount,
-                Created_Date: uniqueID.Created_Date,
-                Account: uniqueID.Account,
-                Original_Price: uniqueID.Price,
-                Price: uniqueID.Price,
-                inUSD: uniqueID.inUSD,
-                Buy_or_Sell: uniqueID.Buy_or_Sell,
-                Original_Type: uniqueID.Buy_or_Sell,
-                Internal_or_External: uniqueID.Internal_or_External,
-              },
-            ] as unknown as Prisma.JsonObject;
+      //       /*
+      //         In the case that there are more than
+      //         250,000 transactions this next section
+      //         of code will split that data into chucks
+      //         in order to process it, otherwise script
+      //         runs into error:
+      //         " let createFifoJson = await prisma.sPL.findMany(
+      //         Failed to convert rust `String` into napi `string`"
+      //       */
 
-            let getZeroArray = jsonUpdateCol[0];
+      //       let createFifoJsonbatch = await prisma.sPL.findMany({
+      //         orderBy: {
+      //           id: "asc",
+      //         },
+      //         where: {
+      //           Token: TokenName.Token,
+      //           Account: accountName.Account,
+      //         },
+      //         select: {
+      //           id: true,
+      //           Token: true,
+      //           Amount: true,
+      //           Created_Date: true,
+      //           Account: true,
+      //           Price: true,
+      //           inUSD: true,
+      //           Buy_or_Sell: true,
+      //           Internal_or_External: true,
+      //         },
+      //         take: batchSize,
+      //         skip: skipthisMany,
+      //       });
 
-            /*
-              create an array to use as filter later
-              in this function to loop through
-            */
+      //       // i used in for loop below
+      //       let i = 0;
 
-            if (i === 0) {
-              createdIdArrayFirstFifoLevel.push(uniqueID.id);
+      //       for (let uniqueID of createFifoJsonbatch) {
+      //         /*
+      //           Creates a JSON to store the Original
+      //           values of a Buy to be used by FIFO
+      //         */
 
-              /*
-                  Fifo must always start
-                  at the very first transaction
-                  and roll from there, in theroy
-                  that transaction would always be
-                  a buy
-                */
+      //         let jsonUpdateCol = [
+      //           {
+      //             id: uniqueID.id,
+      //             Token: uniqueID.Token,
+      //             Amount: uniqueID.Amount,
+      //             Original_Amount: uniqueID.Amount,
+      //             Remaining_Amount: uniqueID.Amount,
+      //             Created_Date: uniqueID.Created_Date,
+      //             Account: uniqueID.Account,
+      //             Original_Price: uniqueID.Price,
+      //             Price: uniqueID.Price,
+      //             inUSD: uniqueID.inUSD,
+      //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //             Original_Type: uniqueID.Buy_or_Sell,
+      //             Internal_or_External: uniqueID.Internal_or_External,
+      //           },
+      //         ] as unknown as Prisma.JsonObject;
 
-              await prisma.fifo.upsert({
-                where: {
-                  id: uniqueID.id,
-                },
-                update: {
-                  Fifo: getZeroArray,
-                  Buy_or_Sell: uniqueID.Buy_or_Sell,
-                  LevelFifo: getZeroArray,
-                  SPL: {
-                    connect: {
-                      id: uniqueID.id,
-                    },
-                  },
-                },
-                create: {
-                  Fifo: getZeroArray,
-                  Buy_or_Sell: uniqueID.Buy_or_Sell,
-                  LevelFifo: getZeroArray,
-                  SPL: {
-                    connect: {
-                      id: uniqueID.id,
-                    },
-                  },
-                },
-              });
-              i++;
-            }
-            /*
-              Create or update the
-              Fifo column which just stores a
-              frozen value
-            */
-            if (i != 0) {
-              await prisma.fifo.upsert({
-                where: {
-                  id: uniqueID.id,
-                },
-                update: {
-                  Buy_or_Sell: uniqueID.Buy_or_Sell,
-                  Fifo: getZeroArray,
-                  SPL: {
-                    connect: {
-                      id: uniqueID.id,
-                    },
-                  },
-                },
-                create: {
-                  Buy_or_Sell: uniqueID.Buy_or_Sell,
-                  Fifo: getZeroArray,
-                  SPL: {
-                    connect: {
-                      id: uniqueID.id,
-                    },
-                  },
-                },
-              });
-            }
-          }
-        }
-      }
+      //         let getZeroArray = jsonUpdateCol[0];
+
+      //         /*
+      //           create an array to use as filter later
+      //           in this function to loop through
+      //         */
+
+      //         if (i === 0) {
+      //           createdIdArrayFirstFifoLevel.push(uniqueID.id);
+
+      //           /*
+      //               Fifo must always start
+      //               at the very first transaction
+      //               and roll from there, in theroy
+      //               that transaction would always be
+      //               a buy
+      //             */
+
+      //           await prisma.fifo.upsert({
+      //             where: {
+      //               id: uniqueID.id,
+      //             },
+      //             update: {
+      //               Fifo: getZeroArray,
+      //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //               LevelFifo: getZeroArray,
+      //               SPL: {
+      //                 connect: {
+      //                   id: uniqueID.id,
+      //                 },
+      //               },
+      //             },
+      //             create: {
+      //               Fifo: getZeroArray,
+      //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //               LevelFifo: getZeroArray,
+      //               SPL: {
+      //                 connect: {
+      //                   id: uniqueID.id,
+      //                 },
+      //               },
+      //             },
+      //           });
+      //           i++;
+      //         }
+      //         /*
+      //           Create or update the
+      //           Fifo column which just stores a
+      //           frozen value
+      //         */
+      //         if (i != 0) {
+      //           await prisma.fifo.upsert({
+      //             where: {
+      //               id: uniqueID.id,
+      //             },
+      //             update: {
+      //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //               Fifo: getZeroArray,
+      //               SPL: {
+      //                 connect: {
+      //                   id: uniqueID.id,
+      //                 },
+      //               },
+      //             },
+      //             create: {
+      //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //               Fifo: getZeroArray,
+      //               SPL: {
+      //                 connect: {
+      //                   id: uniqueID.id,
+      //                 },
+      //               },
+      //             },
+      //           });
+      //         }
+      //       }
+      //     }
+      //   } else {
+      //     /*
+      //         In the case that there are less than
+      //         250,000 (batchSize) transactions this next section
+      //         of code will split that data into chucks
+      //         in order to process it, otherwise script
+      //         runs into error:
+      //         " let createFifoJson = await prisma.sPL.findMany(
+      //         Failed to convert rust `String` into napi `string`"
+      //       */
 
       //     let createFifoJson = await prisma.sPL.findMany({
       //       orderBy: {
@@ -352,16 +379,13 @@ async function fifoUpdateColumn() {
       //       },
       //       // take: 1,
       //     });
-
       //     // i used in for loop below
       //     let i = 0;
-
       //     for (let uniqueID of createFifoJson) {
       //       /*
-      //         Creates a JSON to store the Original
-      //         values of a Buy to be used by FIFO
-      //       */
-
+      //             Creates a JSON to store the Original
+      //             values of a Buy to be used by FIFO
+      //           */
       //       let jsonUpdateCol = [
       //         {
       //           id: uniqueID.id,
@@ -379,25 +403,20 @@ async function fifoUpdateColumn() {
       //           Internal_or_External: uniqueID.Internal_or_External,
       //         },
       //       ] as unknown as Prisma.JsonObject;
-
       //       let getZeroArray = jsonUpdateCol[0];
-
       //       /*
-      //         create an array to use as filter later
-      //         in this function to loop through
-      //       */
-
+      //             create an array to use as filter later
+      //             in this function to loop through
+      //           */
       //       if (i === 0) {
       //         createdIdArrayFirstFifoLevel.push(uniqueID.id);
-
       //         /*
-      //             Fifo must always start
-      //             at the very first transaction
-      //             and roll from there, in theroy
-      //             that transaction would always be
-      //             a buy
-      //           */
-
+      //                 Fifo must always start
+      //                 at the very first transaction
+      //                 and roll from there, in theroy
+      //                 that transaction would always be
+      //                 a buy
+      //               */
       //         await prisma.fifo.upsert({
       //           where: {
       //             id: uniqueID.id,
@@ -426,10 +445,10 @@ async function fifoUpdateColumn() {
       //         i++;
       //       }
       //       /*
-      //         Create or update the
-      //         Fifo column which just stores a
-      //         frozen value
-      //       */
+      //             Create or update the
+      //             Fifo column which just stores a
+      //             frozen value
+      //           */
       //       if (i != 0) {
       //         await prisma.fifo.upsert({
       //           where: {
@@ -456,13 +475,14 @@ async function fifoUpdateColumn() {
       //         });
       //       }
       //     }
+      //   }
+      calcFifoColumns(tName, aName);
     }
   }
-  // calcFifoColumns(createdIdArrayFirstFifoLevel);
 }
 
-async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
-  /* 
+async function calcFifoColumns(tName, aName) {
+  /*
     In this function I call all the data
     in order of date from Oldest to youngest
     I put all of that data into a JSON
@@ -470,321 +490,321 @@ async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
     realized gains for any Sell based on the first
     item (FIFO) queued in the JSON array,
     every new  buy adds a new "level" to the que of FIFO
-    JSON array  
+    JSON array
   */
 
-  let findFifoTransaction = await prisma.fifo.findMany({
-    /* 
-      Grab all the unique transactions
-      that are not the first level
-       of the FIFO functions
-    */
+  let findFirst = await prisma.fifo.findFirst({
     orderBy: {
       id: "asc",
     },
     where: {
-      NOT: {
-        id: {
-          in: createdIdArrayFirstFifoLevel,
+      AND: [
+        {
+          LevelFifo: {
+            path: ["Account"],
+            equals: `${aName}`,
+          },
         },
-      },
+        {
+          LevelFifo: {
+            path: ["Token"],
+            equals: `${tName}`,
+          },
+        },
+      ],
     },
-    select: {
-      id: true,
-      Fifo: true,
-      LevelFifo: true,
-    },
-    // take: 5,
   });
 
-  for (let thisRowofFifo of findFifoTransaction) {
-    /* 
-    Data Structure:
-    {
-      id: 2,
-      Fifo: {
-      "id": 1,
-      "Price": "0",
-      "Token": "DEC",
-      "inUSD": "0",
-      "Amount": "50914",
-      "Account": "Aggroed",
-      "Buy_or_Sell": "Buy",
-      "Created_Date": "2020-06-11T00:00:00.000Z",
-      "Original_Type": "Buy",
-      "Original_Price": "0",
-      "Original_Amount": "50914",
-      "Remaining_Amount": "50914",
-      "Internal_or_External": "External"
-    } 
-   */
-
-    if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Sell") {
-      /* 
-        When you grab the current sell trans
-        you have to then grab the level of FIFO
-        that is currently being consumed i.e. the id of 
-        LevelFifo (column in DB) - 1
-      */
-      let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
-
-      let prevLevel = await prisma.fifo.findUnique({
-        where: {
-          id: prevId,
-        },
-        select: {
-          LevelFifo: true,
-        },
-      });
-
-      /* 
-        Define the got variables 
-        as Typescript numbers
-      */
-
-      let currentSellAmount = Number(thisRowofFifo.Fifo["Amount"]);
-      let currentPrice = Number(thisRowofFifo.Fifo["Price"]);
-      let prevLevelFifoAmount = Number(prevLevel.LevelFifo["Remaining_Amount"]);
-      let prevLevelFifoPrice = Number(prevLevel.LevelFifo["Original_Price"]);
-      let amountNotLessThanZero =
-        Number(prevLevelFifoAmount) + Number(currentSellAmount);
-      let costBasis = 0;
-      let accumulateRealized = 0;
-      let leftToSell = 0;
-      let maxRemainSell = Number(prevLevel.LevelFifo["Remaining_Amount"]);
-      let multiSellArray = [];
-
-      if (amountNotLessThanZero > 0) {
-        /* 
-              calcualte realized gain/ loss in the case that
-              the sell doesn't fully consume the FIFO level
-            */
-        costBasis = currentSellAmount * prevLevelFifoPrice;
-        let soldInUSD = currentPrice * currentSellAmount;
-        let calcRealized = soldInUSD - costBasis;
-
-        // console.log(
-        //   `id: ${thisRowofFifo.Fifo["id"]}
-        //   sell price: ${currentPrice}
-        //   fifo Price: ${prevLevelFifoPrice}
-        //   sell amount: ${currentSellAmount}
-        //   Remaining Amount: ${amountNotLessThanZero}`
-        // );
-
-        await prisma.fifo.upsert({
-          where: {
-            id: thisRowofFifo.id,
-          },
-          update: {
-            Realized: calcRealized,
-            LevelFifo: {
-              id: prevLevel.LevelFifo["id"],
-              Original_Price: prevLevel.LevelFifo["Original_Price"],
-              Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-              Token: prevLevel.LevelFifo["Token"],
-              inUSD: prevLevel.LevelFifo["inUSD"],
-              Original_Amount: prevLevel.LevelFifo["Amount"],
-              Consumed_Amount_For_This_Sale: thisRowofFifo.Fifo["Amount"],
-              Remaining_Amount: amountNotLessThanZero,
-              Account: prevLevel.LevelFifo["Account"],
-              Original_Type: prevLevel.LevelFifo["Original_Type"],
-              Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-              FIFO_Date: prevLevel.LevelFifo["Created_Date"],
-              Sale_Date: thisRowofFifo.Fifo["Date"],
-              Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
-              Realized: calcRealized,
-            },
-          },
-          create: {
-            Realized: calcRealized,
-            LevelFifo: {
-              id: prevLevel.LevelFifo["id"],
-              Original_Price: prevLevel.LevelFifo["Original_Price"],
-              Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-              Token: prevLevel.LevelFifo["Token"],
-              inUSD: prevLevel.LevelFifo["inUSD"],
-              Original_Amount: prevLevel.LevelFifo["Amount"],
-              Consumed_Amount_For_This_Sale: thisRowofFifo.Fifo["Amount"],
-              Remaining_Amount: amountNotLessThanZero,
-              Account: prevLevel.LevelFifo["Account"],
-              Original_Type: prevLevel.LevelFifo["Original_Type"],
-              Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-              FIFO_Date: prevLevel.LevelFifo["Created_Date"],
-              Sale_Date: thisRowofFifo.Fifo["Date"],
-              Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
-              Realized: calcRealized,
-            },
-          },
-        });
-      }
-
-      if (amountNotLessThanZero < 0) {
-        let i = 0;
-        let myNull = "notnull";
-        leftToSell = currentSellAmount + maxRemainSell;
-        while (myNull === "notnull") {
-          /*
-           in the case your sell
-           consumes multiple levels of buys
-           this script tracks what the total sell is
-           versus the size of the buy in the givencle
-           level of FIFO
-          */
-
-          let nextBuyId = Number(prevLevel.LevelFifo["id"] + i);
-          let soldInUSD = currentPrice * maxRemainSell;
-          let calcRealized = soldInUSD - costBasis;
-          accumulateRealized = accumulateRealized + calcRealized;
-
-          if (i === 0) {
-            multiSellArray.push({
-              id: nextBuyId,
-              Original_Price: prevLevel.LevelFifo["Original_Price"],
-              Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-              Token: prevLevel.LevelFifo["Token"],
-              inUSD: prevLevel.LevelFifo["inUSD"],
-              Original_Amount: prevLevel.LevelFifo["Amount"],
-              Consumed_Amount_For_This_Sale: maxRemainSell,
-              Remaining_Amount: prevLevelFifoAmount - maxRemainSell,
-              Account: prevLevel.LevelFifo["Account"],
-              Original_Type: prevLevel.LevelFifo["Original_Type"],
-              Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-              FIFO_Date: prevLevel.LevelFifo["Created_Date"],
-              Sale_Date: thisRowofFifo.Fifo["Created_Date"],
-              Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
-              Realized: calcRealized,
-            });
-          }
-
-          let nextBuy = await prisma.fifo.findFirst({
-            orderBy: {
-              id: "asc",
-            },
-            where: {
-              id: {
-                gte: nextBuyId,
-              },
-              Buy_or_Sell: "Buy",
-            },
-          });
-
-          if (i > 0) {
-            if (-leftToSell >= nextBuy.Fifo["Original_Amount"]) {
-              maxRemainSell = nextBuy.Fifo["Original_Amount"];
-
-              multiSellArray.push({
-                id: nextBuyId,
-                currentSellAmount: currentSellAmount,
-                leftToSell: leftToSell,
-                Original_Price: nextBuy.Fifo["Original_Price"],
-                Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-                Token: nextBuy.Fifo["Token"],
-                inUSD: nextBuy.Fifo["inUSD"],
-                Original_Amount: nextBuy.Fifo["Amount"],
-                Consumed_Amount_For_This_Sale: maxRemainSell,
-                Remaining_Amount: 0,
-                Account: nextBuy.Fifo["Account"],
-                Original_Type: prevLevel.LevelFifo["Original_Type"],
-                Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-                FIFO_Date: nextBuy.Fifo["Created_Date"],
-                Sale_Date: thisRowofFifo.Fifo["Created_Date"],
-                Internal_or_External:
-                  thisRowofFifo.Fifo["Internal_or_External"],
-                Realized: calcRealized,
-              });
-
-              leftToSell = leftToSell + Number(maxRemainSell);
-            } else {
-              maxRemainSell =
-                Number(nextBuy.Fifo["Original_Amount"]) + leftToSell;
-
-              multiSellArray.push({
-                id: nextBuyId,
-                currentSellAmount: currentSellAmount,
-                leftToSell: leftToSell,
-                Original_Price: nextBuy.Fifo["Original_Price"],
-                Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
-                Token: nextBuy.Fifo["Token"],
-                inUSD: nextBuy.Fifo["inUSD"],
-                Original_Amount: nextBuy.Fifo["Amount"],
-                Consumed_Amount_For_This_Sale:
-                  Number(nextBuy.Fifo["Amount"]) - maxRemainSell,
-                Remaining_Amount: maxRemainSell,
-                Account: nextBuy.Fifo["Account"],
-                Original_Type: prevLevel.LevelFifo["Original_Type"],
-                Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
-                FIFO_Date: nextBuy.Fifo["Created_Date"],
-                Sale_Date: thisRowofFifo.Fifo["Created_Date"],
-                Internal_or_External:
-                  thisRowofFifo.Fifo["Internal_or_External"],
-                Realized: calcRealized,
-                AccumulateRealized: accumulateRealized,
-              });
-              myNull = "cancel while loop found all the buys we need";
-
-              let typeCO = Number(nextBuy.id) + 1;
-              let arrayLength = multiSellArray.length - 1;
-
-              await prisma.fifo.upsert({
-                where: {
-                  id: typeCO,
-                },
-                create: {
-                  LevelFifo: multiSellArray[arrayLength],
-                  MultiLevelFifo: multiSellArray,
-                  Realized: accumulateRealized,
-                },
-                update: {
-                  LevelFifo: multiSellArray[arrayLength],
-                  MultiLevelFifo: multiSellArray,
-                  Realized: accumulateRealized,
-                },
-              });
-            }
-          }
-
-          i++;
-        }
-        // console.log(multiSellArray);
-      }
-    }
-
-    if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Buy") {
-      /* 
-        When you grab the current sell trans
-        you have to then grab the level of FIFO
-        that is currently being consumed i.e. the id of 
-        LevelFifo (column in DB) - 1
-      */
-      let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
-
-      let prevLevel = await prisma.fifo.findUnique({
-        where: {
-          id: prevId,
-        },
-        select: {
-          LevelFifo: true,
-        },
-      });
-
-      /* 
-        Define the got variables 
-        as Typescript numbers
-      */
-
-      await prisma.fifo.upsert({
-        where: {
-          id: thisRowofFifo.id,
-        },
-        update: {
-          Realized: 0.0,
-          LevelFifo: prevLevel.LevelFifo,
-        },
-        create: {
-          Realized: 0.0,
-          LevelFifo: prevLevel.LevelFifo,
-        },
-      });
-    }
-  }
+  console.log("find first", findFirst, aName);
+  // let findFifoTransaction = await prisma.fifo.findMany({
+  //   /*
+  //     Grab all the unique transactions
+  //     that are not the first level
+  //      of the FIFO functions
+  //   */
+  //   orderBy: {
+  //     id: "asc",
+  //   },
+  //   where: {
+  //     NOT: {
+  //       id: {
+  //         in: createdIdArrayFirstFifoLevel,
+  //       },
+  //     },
+  //   },
+  //   select: {
+  //     id: true,
+  //     Fifo: true,
+  //     LevelFifo: true,
+  //   },
+  //   // take: 5,
+  // });
+  // for (let thisRowofFifo of findFifoTransaction) {
+  //   /*
+  //   Data Structure:
+  //   {
+  //     id: 2,
+  //     Fifo: {
+  //     "id": 1,
+  //     "Price": "0",
+  //     "Token": "DEC",
+  //     "inUSD": "0",
+  //     "Amount": "50914",
+  //     "Account": "Aggroed",
+  //     "Buy_or_Sell": "Buy",
+  //     "Created_Date": "2020-06-11T00:00:00.000Z",
+  //     "Original_Type": "Buy",
+  //     "Original_Price": "0",
+  //     "Original_Amount": "50914",
+  //     "Remaining_Amount": "50914",
+  //     "Internal_or_External": "External"
+  //   }
+  //  */
+  //   if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Sell") {
+  //     /*
+  //       When you grab the current sell trans
+  //       you have to then grab the level of FIFO
+  //       that is currently being consumed i.e. the id of
+  //       LevelFifo (column in DB) - 1
+  //     */
+  //     let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
+  //     let prevLevel = await prisma.fifo.findUnique({
+  //       where: {
+  //         id: prevId,
+  //       },
+  //       select: {
+  //         LevelFifo: true,
+  //       },
+  //     });
+  //     /*
+  //       Define the got variables
+  //       as Typescript numbers
+  //     */
+  //     let currentSellAmount = Number(thisRowofFifo.Fifo["Amount"]);
+  //     let currentPrice = Number(thisRowofFifo.Fifo["Price"]);
+  //     let prevLevelFifoAmount = Number(prevLevel.LevelFifo["Remaining_Amount"]);
+  //     let prevLevelFifoPrice = Number(prevLevel.LevelFifo["Original_Price"]);
+  //     let amountNotLessThanZero =
+  //       Number(prevLevelFifoAmount) + Number(currentSellAmount);
+  //     let costBasis = 0;
+  //     let accumulateRealized = 0;
+  //     let leftToSell = 0;
+  //     let maxRemainSell = Number(prevLevel.LevelFifo["Remaining_Amount"]);
+  //     let multiSellArray = [];
+  //     if (amountNotLessThanZero > 0) {
+  //       /*
+  //             calcualte realized gain/ loss in the case that
+  //             the sell doesn't fully consume the FIFO level
+  //           */
+  //       costBasis = currentSellAmount * prevLevelFifoPrice;
+  //       let soldInUSD = currentPrice * currentSellAmount;
+  //       let calcRealized = soldInUSD - costBasis;
+  //       // console.log(
+  //       //   `id: ${thisRowofFifo.Fifo["id"]}
+  //       //   sell price: ${currentPrice}
+  //       //   fifo Price: ${prevLevelFifoPrice}
+  //       //   sell amount: ${currentSellAmount}
+  //       //   Remaining Amount: ${amountNotLessThanZero}`
+  //       // );
+  //       await prisma.fifo.upsert({
+  //         where: {
+  //           id: thisRowofFifo.id,
+  //         },
+  //         update: {
+  //           Realized: calcRealized,
+  //           LevelFifo: {
+  //             id: prevLevel.LevelFifo["id"],
+  //             Original_Price: prevLevel.LevelFifo["Original_Price"],
+  //             Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+  //             Token: prevLevel.LevelFifo["Token"],
+  //             inUSD: prevLevel.LevelFifo["inUSD"],
+  //             Original_Amount: prevLevel.LevelFifo["Amount"],
+  //             Consumed_Amount_For_This_Sale: thisRowofFifo.Fifo["Amount"],
+  //             Remaining_Amount: amountNotLessThanZero,
+  //             Account: prevLevel.LevelFifo["Account"],
+  //             Original_Type: prevLevel.LevelFifo["Original_Type"],
+  //             Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+  //             FIFO_Date: prevLevel.LevelFifo["Created_Date"],
+  //             Sale_Date: thisRowofFifo.Fifo["Date"],
+  //             Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
+  //             Realized: calcRealized,
+  //           },
+  //         },
+  //         create: {
+  //           Realized: calcRealized,
+  //           LevelFifo: {
+  //             id: prevLevel.LevelFifo["id"],
+  //             Original_Price: prevLevel.LevelFifo["Original_Price"],
+  //             Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+  //             Token: prevLevel.LevelFifo["Token"],
+  //             inUSD: prevLevel.LevelFifo["inUSD"],
+  //             Original_Amount: prevLevel.LevelFifo["Amount"],
+  //             Consumed_Amount_For_This_Sale: thisRowofFifo.Fifo["Amount"],
+  //             Remaining_Amount: amountNotLessThanZero,
+  //             Account: prevLevel.LevelFifo["Account"],
+  //             Original_Type: prevLevel.LevelFifo["Original_Type"],
+  //             Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+  //             FIFO_Date: prevLevel.LevelFifo["Created_Date"],
+  //             Sale_Date: thisRowofFifo.Fifo["Date"],
+  //             Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
+  //             Realized: calcRealized,
+  //           },
+  //         },
+  //       });
+  //     }
+  //     if (amountNotLessThanZero < 0) {
+  //       let i = 0;
+  //       let myNull = "notnull";
+  //       leftToSell = currentSellAmount + maxRemainSell;
+  //       while (myNull === "notnull") {
+  //         /*
+  //          in the case your sell
+  //          consumes multiple levels of buys
+  //          this script tracks what the total sell is
+  //          versus the size of the buy in the givencle
+  //          level of FIFO
+  //         */
+  //         let nextBuyId = Number(prevLevel.LevelFifo["id"] + i);
+  //         let soldInUSD = currentPrice * maxRemainSell;
+  //         let calcRealized = soldInUSD - costBasis;
+  //         accumulateRealized = accumulateRealized + calcRealized;
+  //         if (i === 0) {
+  //           multiSellArray.push({
+  //             id: nextBuyId,
+  //             Original_Price: prevLevel.LevelFifo["Original_Price"],
+  //             Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+  //             Token: prevLevel.LevelFifo["Token"],
+  //             inUSD: prevLevel.LevelFifo["inUSD"],
+  //             Original_Amount: prevLevel.LevelFifo["Amount"],
+  //             Consumed_Amount_For_This_Sale: maxRemainSell,
+  //             Remaining_Amount: prevLevelFifoAmount - maxRemainSell,
+  //             Account: prevLevel.LevelFifo["Account"],
+  //             Original_Type: prevLevel.LevelFifo["Original_Type"],
+  //             Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+  //             FIFO_Date: prevLevel.LevelFifo["Created_Date"],
+  //             Sale_Date: thisRowofFifo.Fifo["Created_Date"],
+  //             Internal_or_External: thisRowofFifo.Fifo["Internal_or_External"],
+  //             Realized: calcRealized,
+  //           });
+  //         }
+  //         let nextBuy = await prisma.fifo.findFirst({
+  //           orderBy: {
+  //             id: "asc",
+  //           },
+  //           where: {
+  //             id: {
+  //               gte: nextBuyId,
+  //             },
+  //             Buy_or_Sell: "Buy",
+  //           },
+  //         });
+  //         if (i > 0) {
+  //           if (-leftToSell >= nextBuy.Fifo["Original_Amount"]) {
+  //             maxRemainSell = nextBuy.Fifo["Original_Amount"];
+  //             multiSellArray.push({
+  //               id: nextBuyId,
+  //               currentSellAmount: currentSellAmount,
+  //               leftToSell: leftToSell,
+  //               Original_Price: nextBuy.Fifo["Original_Price"],
+  //               Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+  //               Token: nextBuy.Fifo["Token"],
+  //               inUSD: nextBuy.Fifo["inUSD"],
+  //               Original_Amount: nextBuy.Fifo["Amount"],
+  //               Consumed_Amount_For_This_Sale: maxRemainSell,
+  //               Remaining_Amount: 0,
+  //               Account: nextBuy.Fifo["Account"],
+  //               Original_Type: prevLevel.LevelFifo["Original_Type"],
+  //               Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+  //               FIFO_Date: nextBuy.Fifo["Created_Date"],
+  //               Sale_Date: thisRowofFifo.Fifo["Created_Date"],
+  //               Internal_or_External:
+  //                 thisRowofFifo.Fifo["Internal_or_External"],
+  //               Realized: calcRealized,
+  //             });
+  //             leftToSell = leftToSell + Number(maxRemainSell);
+  //           } else {
+  //             maxRemainSell =
+  //               Number(nextBuy.Fifo["Original_Amount"]) + leftToSell;
+  //             multiSellArray.push({
+  //               id: nextBuyId,
+  //               currentSellAmount: currentSellAmount,
+  //               leftToSell: leftToSell,
+  //               Original_Price: nextBuy.Fifo["Original_Price"],
+  //               Price_Of_Current_Sale: thisRowofFifo.Fifo["Price"],
+  //               Token: nextBuy.Fifo["Token"],
+  //               inUSD: nextBuy.Fifo["inUSD"],
+  //               Original_Amount: nextBuy.Fifo["Amount"],
+  //               Consumed_Amount_For_This_Sale:
+  //                 Number(nextBuy.Fifo["Amount"]) - maxRemainSell,
+  //               Remaining_Amount: maxRemainSell,
+  //               Account: nextBuy.Fifo["Account"],
+  //               Original_Type: prevLevel.LevelFifo["Original_Type"],
+  //               Row_Type: thisRowofFifo.Fifo["Buy_or_Sell"],
+  //               FIFO_Date: nextBuy.Fifo["Created_Date"],
+  //               Sale_Date: thisRowofFifo.Fifo["Created_Date"],
+  //               Internal_or_External:
+  //                 thisRowofFifo.Fifo["Internal_or_External"],
+  //               Realized: calcRealized,
+  //               AccumulateRealized: accumulateRealized,
+  //             });
+  //             myNull = "cancel while loop found all the buys we need";
+  //             let typeCO = Number(nextBuy.id) + 1;
+  //             let arrayLength = multiSellArray.length - 1;
+  //             await prisma.fifo.upsert({
+  //               where: {
+  //                 id: typeCO,
+  //               },
+  //               create: {
+  //                 LevelFifo: multiSellArray[arrayLength],
+  //                 MultiLevelFifo: multiSellArray,
+  //                 Realized: accumulateRealized,
+  //               },
+  //               update: {
+  //                 LevelFifo: multiSellArray[arrayLength],
+  //                 MultiLevelFifo: multiSellArray,
+  //                 Realized: accumulateRealized,
+  //               },
+  //             });
+  //           }
+  //         }
+  //         i++;
+  //       }
+  //       // console.log(multiSellArray);
+  //     }
+  //   }
+  //   if (thisRowofFifo.Fifo["Buy_or_Sell"] === "Buy") {
+  //     /*
+  //       When you grab the current sell trans
+  //       you have to then grab the level of FIFO
+  //       that is currently being consumed i.e. the id of
+  //       LevelFifo (column in DB) - 1
+  //     */
+  //     let prevId = Number(thisRowofFifo.Fifo["id"]) - 1;
+  //     let prevLevel = await prisma.fifo.findUnique({
+  //       where: {
+  //         id: prevId,
+  //       },
+  //       select: {
+  //         LevelFifo: true,
+  //       },
+  //     });
+  //     /*
+  //       Define the got variables
+  //       as Typescript numbers
+  //     */
+  //     await prisma.fifo.upsert({
+  //       where: {
+  //         id: thisRowofFifo.id,
+  //       },
+  //       update: {
+  //         Realized: 0.0,
+  //         LevelFifo: prevLevel.LevelFifo,
+  //       },
+  //       create: {
+  //         Realized: 0.0,
+  //         LevelFifo: prevLevel.LevelFifo,
+  //       },
+  //     });
+  //   }
+  // }
 }
