@@ -20,25 +20,12 @@ export function fifoPrompt() {
   prompt.run().then(function (answer) {
     if (answer === 0) {
       answer = null;
-      // cumBuy();
-      // cumSell();
-      fifoUpdateColumn();
-      //calcFifoColumns();
+      fifoUpdateColumn().catch((e) => {
+        console.error(e);
+        process.exit(1);
+      });
     }
-    // if (answer === 1) {
-    //   answer = null;
-    //   cumBuy();
-    // }
-    // if (answer === 2) {
-    //   answer = null;
-    //   cumSell();
-    // }
-    // if (answer === 3) {
-    //   answer = null;
-    //   rxBalance();
-    // }
-    // if (answer === 4) {
-    // }
+
     if (answer === 9) {
       mainPrompt();
     }
@@ -136,6 +123,9 @@ async function fifoUpdateColumn() {
     */
 
   const findAllAccounts = await prisma.listing_Account.findMany({
+    orderBy: {
+      id: "asc",
+    },
     select: {
       Account: true,
     },
@@ -146,6 +136,9 @@ async function fifoUpdateColumn() {
     through later in the function
   */
   const findAllTokens = await prisma.listing_Token.findMany({
+    orderBy: {
+      id: "asc",
+    },
     select: {
       Token: true,
     },
@@ -161,136 +154,311 @@ async function fifoUpdateColumn() {
     organized by date ascending
   */
   let createdIdArrayFirstFifoLevel = [];
+
   for (let accountName of findAllAccounts) {
     for (let TokenName of findAllTokens) {
-      let createFifoJson = await prisma.sPL.findMany({
-        orderBy: {
-          id: "asc",
-        },
+      /* 
+        In the case that there are more than 
+        250,000 transactions this next section
+        of code will split that data into chucks
+        in order to process it, otherwise script
+        runs into error:
+         " let createFifoJson = await prisma.sPL.findMany(
+         Failed to convert rust `String` into napi `string`"
+      */
+      let countTrans = await prisma.sPL.count({
         where: {
           Token: TokenName.Token,
           Account: accountName.Account,
         },
-        select: {
-          id: true,
-          Token: true,
-          Amount: true,
-          Created_Date: true,
-          Account: true,
-          Price: true,
-          inUSD: true,
-          Buy_or_Sell: true,
-          Internal_or_External: true,
-        },
-        // take: 1,
       });
 
-      // i used in for loop below
-      let i = 0;
+      /* 
+       Just let user know where you are
+       so they don't think script is frozen
+      */
+      let batchSize = 250000;
+      let moduloOfTransCount = countTrans % batchSize;
+      let numberOfTransCount = countTrans / batchSize;
 
-      for (let uniqueID of createFifoJson) {
-        /* 
-          Creates a JSON to store the Original
-          values of a Buy to be used by FIFO
-        */
+      // console.log(
+      //   "processing first level Fifo for: ",
+      //   countTrans,
+      //   "transactions",
+      //   accountName,
+      //   TokenName
+      // );
 
-        let jsonUpdateCol = [
-          {
-            id: uniqueID.id,
-            Token: uniqueID.Token,
-            Amount: uniqueID.Amount,
-            Original_Amount: uniqueID.Amount,
-            Remaining_Amount: uniqueID.Amount,
-            Created_Date: uniqueID.Created_Date,
-            Account: uniqueID.Account,
-            Original_Price: uniqueID.Price,
-            Price: uniqueID.Price,
-            inUSD: uniqueID.inUSD,
-            Buy_or_Sell: uniqueID.Buy_or_Sell,
-            Original_Type: uniqueID.Buy_or_Sell,
-            Internal_or_External: uniqueID.Internal_or_External,
-          },
-        ] as unknown as Prisma.JsonObject;
+      if (Math.floor(numberOfTransCount) > 0) {
+        // console.log(moduloOfTransCount, Math.floor(numberOfTransCount));
+        let lengthOf250k = Math.floor(numberOfTransCount) + 1;
 
-        let getZeroArray = jsonUpdateCol[0];
-
-        /* 
-          create an array to use as filter later 
-          in this function to loop through
-        */
-
-        if (i === 0) {
-          createdIdArrayFirstFifoLevel.push(uniqueID.id);
-
+        for (let i = 1; i <= lengthOf250k; i++) {
           /* 
-              Fifo must always start
-              at the very first transaction
-              and roll from there, in theroy
-              that transaction would always be
-              a buy
+            In the case that there are more than 
+            250,000 transactions this next section
+            of code will split that data into chucks
+            in order to process it, otherwise script
+            runs into error:
+            " let createFifoJson = await prisma.sPL.findMany(
+            Failed to convert rust `String` into napi `string`"
+          */
+          let createFifoJson = await prisma.sPL.findMany({
+            orderBy: {
+              id: "asc",
+            },
+            where: {
+              Token: TokenName.Token,
+              Account: accountName.Account,
+            },
+            select: {
+              id: true,
+              Token: true,
+              Amount: true,
+              Created_Date: true,
+              Account: true,
+              Price: true,
+              inUSD: true,
+              Buy_or_Sell: true,
+              Internal_or_External: true,
+            },
+            // take: 1,
+          });
+
+          // i used in for loop below
+          let i = 0;
+
+          for (let uniqueID of createFifoJson) {
+            /*
+              Creates a JSON to store the Original
+              values of a Buy to be used by FIFO
             */
 
-          await prisma.fifo.upsert({
-            where: {
-              id: uniqueID.id,
-            },
-            update: {
-              Fifo: getZeroArray,
-              Buy_or_Sell: uniqueID.Buy_or_Sell,
-              LevelFifo: getZeroArray,
-              SPL: {
-                connect: {
+            let jsonUpdateCol = [
+              {
+                id: uniqueID.id,
+                Token: uniqueID.Token,
+                Amount: uniqueID.Amount,
+                Original_Amount: uniqueID.Amount,
+                Remaining_Amount: uniqueID.Amount,
+                Created_Date: uniqueID.Created_Date,
+                Account: uniqueID.Account,
+                Original_Price: uniqueID.Price,
+                Price: uniqueID.Price,
+                inUSD: uniqueID.inUSD,
+                Buy_or_Sell: uniqueID.Buy_or_Sell,
+                Original_Type: uniqueID.Buy_or_Sell,
+                Internal_or_External: uniqueID.Internal_or_External,
+              },
+            ] as unknown as Prisma.JsonObject;
+
+            let getZeroArray = jsonUpdateCol[0];
+
+            /*
+              create an array to use as filter later
+              in this function to loop through
+            */
+
+            if (i === 0) {
+              createdIdArrayFirstFifoLevel.push(uniqueID.id);
+
+              /*
+                  Fifo must always start
+                  at the very first transaction
+                  and roll from there, in theroy
+                  that transaction would always be
+                  a buy
+                */
+
+              await prisma.fifo.upsert({
+                where: {
                   id: uniqueID.id,
                 },
-              },
-            },
-            create: {
-              Fifo: getZeroArray,
-              Buy_or_Sell: uniqueID.Buy_or_Sell,
-              LevelFifo: getZeroArray,
-              SPL: {
-                connect: {
+                update: {
+                  Fifo: getZeroArray,
+                  Buy_or_Sell: uniqueID.Buy_or_Sell,
+                  LevelFifo: getZeroArray,
+                  SPL: {
+                    connect: {
+                      id: uniqueID.id,
+                    },
+                  },
+                },
+                create: {
+                  Fifo: getZeroArray,
+                  Buy_or_Sell: uniqueID.Buy_or_Sell,
+                  LevelFifo: getZeroArray,
+                  SPL: {
+                    connect: {
+                      id: uniqueID.id,
+                    },
+                  },
+                },
+              });
+              i++;
+            }
+            /*
+              Create or update the
+              Fifo column which just stores a
+              frozen value
+            */
+            if (i != 0) {
+              await prisma.fifo.upsert({
+                where: {
                   id: uniqueID.id,
                 },
-              },
-            },
-          });
-          i++;
-        }
-        /* 
-          Create or update the 
-          Fifo column which just stores a
-          frozen value
-        */
-        if (i != 0) {
-          await prisma.fifo.upsert({
-            where: {
-              id: uniqueID.id,
-            },
-            update: {
-              Buy_or_Sell: uniqueID.Buy_or_Sell,
-              Fifo: getZeroArray,
-              SPL: {
-                connect: {
-                  id: uniqueID.id,
+                update: {
+                  Buy_or_Sell: uniqueID.Buy_or_Sell,
+                  Fifo: getZeroArray,
+                  SPL: {
+                    connect: {
+                      id: uniqueID.id,
+                    },
+                  },
                 },
-              },
-            },
-            create: {
-              Buy_or_Sell: uniqueID.Buy_or_Sell,
-              Fifo: getZeroArray,
-              SPL: {
-                connect: {
-                  id: uniqueID.id,
+                create: {
+                  Buy_or_Sell: uniqueID.Buy_or_Sell,
+                  Fifo: getZeroArray,
+                  SPL: {
+                    connect: {
+                      id: uniqueID.id,
+                    },
+                  },
                 },
-              },
-            },
-          });
+              });
+            }
+          }
         }
       }
+
+      //     let createFifoJson = await prisma.sPL.findMany({
+      //       orderBy: {
+      //         id: "asc",
+      //       },
+      //       where: {
+      //         Token: TokenName.Token,
+      //         Account: accountName.Account,
+      //       },
+      //       select: {
+      //         id: true,
+      //         Token: true,
+      //         Amount: true,
+      //         Created_Date: true,
+      //         Account: true,
+      //         Price: true,
+      //         inUSD: true,
+      //         Buy_or_Sell: true,
+      //         Internal_or_External: true,
+      //       },
+      //       // take: 1,
+      //     });
+
+      //     // i used in for loop below
+      //     let i = 0;
+
+      //     for (let uniqueID of createFifoJson) {
+      //       /*
+      //         Creates a JSON to store the Original
+      //         values of a Buy to be used by FIFO
+      //       */
+
+      //       let jsonUpdateCol = [
+      //         {
+      //           id: uniqueID.id,
+      //           Token: uniqueID.Token,
+      //           Amount: uniqueID.Amount,
+      //           Original_Amount: uniqueID.Amount,
+      //           Remaining_Amount: uniqueID.Amount,
+      //           Created_Date: uniqueID.Created_Date,
+      //           Account: uniqueID.Account,
+      //           Original_Price: uniqueID.Price,
+      //           Price: uniqueID.Price,
+      //           inUSD: uniqueID.inUSD,
+      //           Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //           Original_Type: uniqueID.Buy_or_Sell,
+      //           Internal_or_External: uniqueID.Internal_or_External,
+      //         },
+      //       ] as unknown as Prisma.JsonObject;
+
+      //       let getZeroArray = jsonUpdateCol[0];
+
+      //       /*
+      //         create an array to use as filter later
+      //         in this function to loop through
+      //       */
+
+      //       if (i === 0) {
+      //         createdIdArrayFirstFifoLevel.push(uniqueID.id);
+
+      //         /*
+      //             Fifo must always start
+      //             at the very first transaction
+      //             and roll from there, in theroy
+      //             that transaction would always be
+      //             a buy
+      //           */
+
+      //         await prisma.fifo.upsert({
+      //           where: {
+      //             id: uniqueID.id,
+      //           },
+      //           update: {
+      //             Fifo: getZeroArray,
+      //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //             LevelFifo: getZeroArray,
+      //             SPL: {
+      //               connect: {
+      //                 id: uniqueID.id,
+      //               },
+      //             },
+      //           },
+      //           create: {
+      //             Fifo: getZeroArray,
+      //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //             LevelFifo: getZeroArray,
+      //             SPL: {
+      //               connect: {
+      //                 id: uniqueID.id,
+      //               },
+      //             },
+      //           },
+      //         });
+      //         i++;
+      //       }
+      //       /*
+      //         Create or update the
+      //         Fifo column which just stores a
+      //         frozen value
+      //       */
+      //       if (i != 0) {
+      //         await prisma.fifo.upsert({
+      //           where: {
+      //             id: uniqueID.id,
+      //           },
+      //           update: {
+      //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //             Fifo: getZeroArray,
+      //             SPL: {
+      //               connect: {
+      //                 id: uniqueID.id,
+      //               },
+      //             },
+      //           },
+      //           create: {
+      //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+      //             Fifo: getZeroArray,
+      //             SPL: {
+      //               connect: {
+      //                 id: uniqueID.id,
+      //               },
+      //             },
+      //           },
+      //         });
+      //       }
+      //     }
     }
   }
-  calcFifoColumns(createdIdArrayFirstFifoLevel);
+  // calcFifoColumns(createdIdArrayFirstFifoLevel);
 }
 
 async function calcFifoColumns(createdIdArrayFirstFifoLevel) {
