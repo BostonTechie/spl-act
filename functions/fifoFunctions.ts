@@ -164,8 +164,6 @@ async function fifoUpdateColumn(findAllAccountsFunc, findAllTokensFunc) {
 
   let findAllTokens = await findAllTokensFunc();
 
-  console.log(findAllTokens);
-
   // /*
   //   Created Id Array is an an Array
   //   to store the unique id every time
