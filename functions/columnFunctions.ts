@@ -16,6 +16,7 @@ export function columnPrompt() {
   console.log("2...Lookup DEC prices");
   console.log("3...Lookup SPS prices");
   console.log("4...Update the Buy/Sell Column");
+  console.log("5...Lookup Credit prices");
   console.log("9...back");
 
   prompt.run().then(function (answer) {
@@ -35,9 +36,16 @@ export function columnPrompt() {
       answer = null;
       lookupSPSPriceHistory();
     }
-    if (answer === 3) {
+    if (answer === 4) {
       answer = null;
-      lookupSPSPriceHistory();
+      updateBuySellColumn();
+    }
+    if (answer === 5) {
+      answer = null;
+      lookupCreditsPriceHistory().catch((e) => {
+        console.error(e);
+        process.exit(1);
+      });
     }
     if (answer === 0) {
       answer = null;
@@ -169,7 +177,7 @@ async function lookupDECPriceHistory() {
   });
 
   //this code section updates the prices for any date after the first price date.. Meaning A price exist and can be found online, before (8/10/2020) no data seems to exist
-  const updateSPLwithFindPriceDEC = await prisma.sPL.findMany({
+  const updateSPLwithFindPriceCredit = await prisma.sPL.findMany({
     where: {
       Token: "DEC",
       Created_Date: {
@@ -184,7 +192,7 @@ async function lookupDECPriceHistory() {
     //take: 1,
   });
 
-  for (let element of updateSPLwithFindPriceDEC) {
+  for (let element of updateSPLwithFindPriceCredit) {
     let strmonth = "";
     let strDayOfMonth = "";
 
@@ -238,7 +246,7 @@ async function lookupDECPriceHistory() {
 
     /*
     loop through all the elements in this array
-    updateSPLwithFindPriceDEC who's purpose is to find all 
+    updateSPLwithFindPriceCredit who's purpose is to find all 
     the data that will have price data that I can find and 
     update the data line with the closing price for that day 
     */
@@ -286,6 +294,59 @@ async function lookupDECPriceHistory() {
   }
 
   console.log("👍👍👍 DEC lookup and USD complete");
+}
+
+async function lookupCreditsPriceHistory() {
+  console.log("🌟🌟🌟 starting lookup of CREDIT prices");
+  /*
+    credits for the most part cost
+    $1 for 1000 Credits
+  */
+  let tokenCName = "CREDITS";
+  let CreditPrice = 0.001;
+
+  await prisma.sPL.updateMany({
+    where: {
+      Token: tokenCName,
+    },
+    data: {
+      Price: CreditPrice,
+    },
+  });
+
+  /*
+     Calculate the USD equivalent price of the token,
+     must be run after calcDeclookup, calcSPSlookup.
+    */
+  const calcUSD = await prisma.sPL.findMany({
+    where: {
+      Token: tokenCName,
+    },
+    select: {
+      id: true,
+      Amount: true,
+      Price: true,
+    },
+  });
+
+  let usdOfElement = 0.0;
+  for (let element of calcUSD) {
+    usdOfElement = Number(element.Amount) * Number(element.Price);
+    await prisma.sPL.update({
+      where: {
+        id: element.id,
+      },
+      data: {
+        inUSD: usdOfElement,
+      },
+    });
+
+    if (element.id % 10000 === 0) {
+      console.log("processed through ", element.id);
+    }
+  }
+
+  console.log("👍👍👍 Credit lookup and USD complete");
 }
 
 async function lookupSPSPriceHistory() {

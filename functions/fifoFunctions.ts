@@ -524,11 +524,17 @@ async function findFirstTransFunc(tName, aName) {
 
   if (findFirst != null) {
     let uniqueID = findFirst.id;
-    calcFifoFunction(uniqueID);
+    let notNullCombAccount = aName;
+    let notNullCombToken = tName;
+    calcFifoFunction(uniqueID, notNullCombAccount, notNullCombToken);
   }
 }
 
-async function calcFifoFunction(uniqueID) {
+async function calcFifoFunction(
+  uniqueID,
+  notNullCombAccount,
+  notNullCombToken
+) {
   /* 
    using the unique ids
    in the previous funtion
@@ -553,5 +559,42 @@ async function calcFifoFunction(uniqueID) {
   let uniqueAccount = uniqueAccPlusToken.LevelFifo["Account"];
   let uniqueToken = uniqueAccPlusToken.LevelFifo["Token"];
 
-  let findFifoTransaction = await prisma.fifo.findMany({});
+  let findFifoTransactions = await prisma.fifo.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    where: {
+      AND: [
+        {
+          LevelFifo: {
+            path: ["Account"],
+            equals: `${uniqueAccount}`,
+          },
+        },
+        {
+          LevelFifo: {
+            path: ["Token"],
+            equals: `${uniqueToken}`,
+          },
+        },
+        {
+          id: {
+            not: uniqueID,
+          },
+        },
+      ],
+    },
+    select: {
+      /* 
+        This id will be on the line
+        not within the Fifo column itself
+      */
+      id: true,
+      Fifo: true,
+      LevelFifo: true,
+    },
+    take: 1,
+  });
+
+  console.log(findFifoTransactions);
 }
