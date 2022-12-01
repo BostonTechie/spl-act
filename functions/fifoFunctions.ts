@@ -2,6 +2,7 @@ import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
+import { findSPLManyTokenType } from "../functions/findFunctions";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -13,7 +14,7 @@ export function fifoPrompt() {
   console.log("Please enter one of the following options");
   console.log("0...calc FIFO ");
   console.log("1...calc Credits");
-  console.log("2...calc cumulative sell + previous cumulative sell");
+  console.log("2...import");
   console.log("3...RX the balance '");
   console.log("4... ");
   console.log("9...back");
@@ -31,6 +32,11 @@ export function fifoPrompt() {
         console.error(e);
         process.exit(1);
       });
+    }
+
+    if (answer === 2) {
+      answer = null;
+      test(findSPLManyTokenType);
     }
 
     if (answer === 9) {
@@ -110,6 +116,27 @@ async function rxBalance() {
     }
   }
   console.log("👍👍👍 Completed calc of RXBalance");
+}
+
+async function test(func) {
+  let tokenName = "CREDITS";
+  let accountName = "Aggroed";
+  /* 
+   if you want to return all result
+   punch in number larger than data size
+   i.e 999999999999999 into variable
+   'returnNumofResults' doesn't seem to impact
+   process time
+  */
+  let returnNumofResults = 9999999999;
+  let selectId = true;
+  let pleaselog = await func(
+    tokenName,
+    accountName,
+    selectId,
+    returnNumofResults
+  );
+  console.log(pleaselog);
 }
 
 async function fifoUpdateColumn() {
