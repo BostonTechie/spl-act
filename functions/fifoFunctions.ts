@@ -2,11 +2,20 @@ import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
+
 import {
   findSplIdsFunc,
   findAllAccountsFunc,
   findAllTokensFunc,
 } from "../functions/findFunctions";
+
+import { countTransactions } from "../functions/countFunctions";
+
+/* 
+  Global variables
+*/
+let promiseAccountsGlobal = findAllAccountsFunc();
+let promiseTokensGlobal = findAllTokensFunc();
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -25,7 +34,7 @@ export function fifoPrompt() {
   prompt.run().then(function (answer) {
     if (answer === 0) {
       answer = null;
-      fifoUpdateColumn(findAllAccountsFunc, findAllTokensFunc).catch((e) => {
+      fifoUpdateColumn().catch((e) => {
         console.error(e);
         process.exit(1);
       });
@@ -137,7 +146,15 @@ async function test(func) {
   console.log(pleaselog.length);
 }
 
-async function fifoUpdateColumn(findAllAccountsFunc, findAllTokensFunc) {
+async function fifoCalcRealized(
+  findAllAccountsFunc,
+  findAllTokensFunc,
+  countTransactions
+) {}
+
+async function fifoUpdateColumn() {
+  let findAllAccounts = await promiseAccountsGlobal;
+  console.log(findAllAccounts[0]);
   /* 
     In this function I call all the data
     in order of date from Oldest to youngest
@@ -147,6 +164,7 @@ async function fifoUpdateColumn(findAllAccountsFunc, findAllTokensFunc) {
     item (FIFO) queued in the JSON array,
     every new buy adds a new "level" to the que of FIFO
     JSON array
+    
   */
 
   console.log("🌟🌟🌟 Updating FiFo column");
@@ -155,14 +173,14 @@ async function fifoUpdateColumn(findAllAccountsFunc, findAllTokensFunc) {
    to loop thrugh later in function
   */
 
-  let findAllAccounts = await findAllAccountsFunc();
+  // let findAllAccounts = await findAllAccountsFunc();
 
-  /* 
-    get all unique Tokens to loop
-    through later in the function
-  */
+  // /*
+  //   get all unique Tokens to loop
+  //   through later in the function
+  // */
 
-  let findAllTokens = await findAllTokensFunc();
+  // let findAllTokens = await findAllTokensFunc();
 
   // /*
   //   Created Id Array is an an Array
