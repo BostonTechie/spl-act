@@ -2,7 +2,7 @@ import prisma from "../prisma/client";
 const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
-import { findSPLManyTokenType } from "../functions/findFunctions";
+import { findSplIds } from "../functions/findFunctions";
 
 export function fifoPrompt() {
   //controls the console prompting in this page
@@ -36,7 +36,7 @@ export function fifoPrompt() {
 
     if (answer === 2) {
       answer = null;
-      test(findSPLManyTokenType);
+      test(findSplIds);
     }
 
     if (answer === 9) {
@@ -129,13 +129,7 @@ async function test(func) {
    process time
   */
   let returnNumofResults = 9999999999;
-  let selectId = true;
-  let pleaselog = await func(
-    tokenName,
-    accountName,
-    selectId,
-    returnNumofResults
-  );
+  let pleaselog = await func(tokenName, accountName, returnNumofResults);
   console.log(pleaselog);
 }
 

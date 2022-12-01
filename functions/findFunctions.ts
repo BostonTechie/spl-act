@@ -1,16 +1,16 @@
 import prisma from "../prisma/client";
 
 /* 
-    Below function lets 
-    the user pass in a token name
+  Below function lets 
+  the user pass in:
+    token name,
+    account name,
+    and the number of results they would like
+  then the function returns the unique
+  ids found in the Database
 */
-export async function findSPLManyTokenType(
-  tokenName,
-  accountName,
-  selectId,
-  returnNumofResults
-) {
-  let findTransaction = await prisma.sPL.findMany({
+export async function findSplIds(tokenName, accountName, returnNumofResults) {
+  let findTransId = await prisma.sPL.findMany({
     orderBy: {
       id: "asc",
     },
@@ -19,10 +19,10 @@ export async function findSPLManyTokenType(
       Account: accountName,
     },
     select: {
-      id: selectId,
+      id: true,
     },
     take: returnNumofResults,
   });
 
-  return findTransaction;
+  return findTransId;
 }
