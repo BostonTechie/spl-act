@@ -1,15 +1,14 @@
+const { NumberPrompt } = require("enquirer");
 import prisma from "../prisma/client";
-const { NumberPrompt, Confirm } = require("enquirer");
 import { mainPrompt } from "../mainPrompts";
 import { Prisma } from "@prisma/client";
-
+import { countTransactions } from "../functions/countFunctions";
 import {
   findSplIdsFunc,
   findAllAccountsFunc,
   findAllTokensFunc,
 } from "../functions/findFunctions";
-
-import { countTransactions } from "../functions/countFunctions";
+import { execPath } from "process";
 
 /* 
   Global variables
@@ -49,7 +48,7 @@ export function fifoPrompt() {
 
     if (answer === 2) {
       answer = null;
-      test(findSplIdsFunc);
+      fifoCalcRealized(countTransactions);
     }
 
     if (answer === 9) {
@@ -146,11 +145,35 @@ async function test(func) {
   console.log(pleaselog.length);
 }
 
-async function fifoCalcRealized(
-  findAllAccountsFunc,
-  findAllTokensFunc,
-  countTransactions
-) {}
+async function fifoCalcRealized(countTransactions) {
+  let findAllAccounts = await promiseAccountsGlobal;
+  let findAllTokens = await promiseTokensGlobal;
+  let arrayOfCounts = [];
+
+  for (let account of findAllAccounts) {
+    for (let token of findAllTokens) {
+      let countTrans = await prisma.sPL.count({
+        where: {
+          Token: token.Token,
+          Account: account.Account,
+        },
+      });
+
+      if (countTrans != 0) {
+        if (countTrans <= 250000) {
+        }
+      }
+    }
+  }
+  console.log(arrayOfCounts);
+
+  // let countTrans = await prisma.sPL.count({
+  //   where: {
+  //     Token: token.Token,
+  //     Account: account.Account,
+  //   },
+  // });
+}
 
 async function fifoUpdateColumn() {
   let findAllAccounts = await promiseAccountsGlobal;
