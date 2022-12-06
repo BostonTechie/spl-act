@@ -161,7 +161,118 @@ async function bRealizedFunc5(largeTObject) {
 }
 
 async function sRealizedFunc1(smallTObject) {
-  console.log("i am small func 1", smallTObject);
+  console.log("i am small func 1", smallTObject.account, smallTObject.token);
+
+  let createFifoJson = await prisma.sPL.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    where: {
+      Token: smallTObject.token,
+      Account: smallTObject.account,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  console.log(createFifoJson);
+  //       // i used in for loop below
+  //       let i = 0;
+  //       for (let uniqueID of createFifoJson) {
+  //         /*
+  //               Creates a JSON to store the Original
+  //               values of a Buy to be used by FIFO
+  //             */
+  //         let jsonUpdateCol = [
+  //           {
+  //             id: uniqueID.id,
+  //             Token: uniqueID.Token,
+  //             Amount: uniqueID.Amount,
+  //             Original_Amount: uniqueID.Amount,
+  //             Remaining_Amount: uniqueID.Amount,
+  //             Created_Date: uniqueID.Created_Date,
+  //             Account: uniqueID.Account,
+  //             Original_Price: uniqueID.Price,
+  //             Price: uniqueID.Price,
+  //             inUSD: uniqueID.inUSD,
+  //             Buy_or_Sell: uniqueID.Buy_or_Sell,
+  //             Original_Type: uniqueID.Buy_or_Sell,
+  //             Internal_or_External: uniqueID.Internal_or_External,
+  //           },
+  //         ] as unknown as Prisma.JsonObject;
+  //         let getZeroArray = jsonUpdateCol[0];
+  //         /*
+  //               create an array to use as filter later
+  //               in this function to loop through
+  //             */
+  //         if (i === 0) {
+  //           createdIdArrayFirstFifoLevel.push(uniqueID.id);
+  //           /*
+  //                   Fifo must always start
+  //                   at the very first transaction
+  //                   and roll from there, in theroy
+  //                   that transaction would always be
+  //                   a buy
+  //                 */
+  //           await prisma.fifo.upsert({
+  //             where: {
+  //               id: uniqueID.id,
+  //             },
+  //             update: {
+  //               Fifo: getZeroArray,
+  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+  //               LevelFifo: getZeroArray,
+  //               SPL: {
+  //                 connect: {
+  //                   id: uniqueID.id,
+  //                 },
+  //               },
+  //             },
+  //             create: {
+  //               Fifo: getZeroArray,
+  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+  //               LevelFifo: getZeroArray,
+  //               SPL: {
+  //                 connect: {
+  //                   id: uniqueID.id,
+  //                 },
+  //               },
+  //             },
+  //           });
+  //           i++;
+  //         }
+  //         /*
+  //               Create or update the
+  //               Fifo column which just stores a
+  //               frozen value
+  //             */
+  //         if (i != 0) {
+  //           await prisma.fifo.upsert({
+  //             where: {
+  //               id: uniqueID.id,
+  //             },
+  //             update: {
+  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+  //               Fifo: getZeroArray,
+  //               SPL: {
+  //                 connect: {
+  //                   id: uniqueID.id,
+  //                 },
+  //               },
+  //             },
+  //             create: {
+  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
+  //               Fifo: getZeroArray,
+  //               SPL: {
+  //                 connect: {
+  //                   id: uniqueID.id,
+  //                 },
+  //               },
+  //             },
+  //           });
+  //         }
+  //       }
 }
 
 async function sRealizedFunc2(smallTObject) {
