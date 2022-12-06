@@ -8,7 +8,6 @@ import {
   findAllAccountsFunc,
   findAllTokensFunc,
 } from "../functions/findFunctions";
-import { execPath } from "process";
 
 /* 
   Global variables

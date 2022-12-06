@@ -2,6 +2,12 @@ const { NumberPrompt } = require("enquirer");
 import { columnPrompt } from "./functions/columnFunctions";
 import { tablePrompt } from "./functions/tableFunctions";
 import { fifoPrompt } from "./functions/fifoFunctions";
+import { realizedPrompt } from "./functions/fifoRealizedFunctions";
+import {
+  findSplIdsFunc,
+  findAllAccountsFunc,
+  findAllTokensFunc,
+} from "./functions/findFunctions";
 
 export function mainPrompt() {
   /*
@@ -18,7 +24,7 @@ export function mainPrompt() {
   console.log("0...Set up database");
   console.log("1...update/truncate tables");
   console.log("2...FIFO prompts");
-  console.log("3...test prompts");
+  console.log("3...Realized prompts");
 
   const prompt = new NumberPrompt({
     name: "number",
@@ -40,6 +46,7 @@ export function mainPrompt() {
     }
     if (answer === 3) {
       answer = null;
+      realizedPrompt();
     }
   });
 }
