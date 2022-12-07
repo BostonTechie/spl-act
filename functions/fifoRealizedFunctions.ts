@@ -125,7 +125,10 @@ async function splitBivSmallTRans(countTrans, smallI, bigI, account, token) {
       };
 
       if (smallI === 0) {
-        sendSrealFunc1(smallTObject);
+        sendSrealFunc1(smallTObject).catch((e) => {
+          console.error(e);
+          process.exit(1);
+        });
       }
       if (smallI === 1) {
         sRealizedFunc2(smallTObject);
@@ -211,7 +214,7 @@ async function sendSrealFunc1(smallTObject) {
         in: idArray,
       },
     },
-    take: 1,
+    //take: 1,
   });
 
   smallRealizedBatch1(findAllFifobyType, findFirstFifo);

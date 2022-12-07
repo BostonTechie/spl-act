@@ -1,7 +1,7 @@
 const { NumberPrompt } = require("enquirer");
 import { columnPrompt } from "./functions/columnFunctions";
 import { tablePrompt } from "./functions/tableFunctions";
-import { fifoPrompt } from "./functions/fifoFunctions";
+import { fifoPrompt } from "./functions/firstColumnFifoFunctions";
 import { realizedPrompt } from "./functions/fifoRealizedFunctions";
 import {
   findSplIdsFunc,
