@@ -2,6 +2,7 @@ const { NumberPrompt } = require("enquirer");
 import prisma from "../prisma/client";
 import { Prisma } from "@prisma/client";
 import { mainPrompt } from "../mainPrompts";
+import { smallRealizedBatch1 } from "../batches/smallRealFunction1";
 import {
   findSplIdsFunc,
   findAllAccountsFunc,
@@ -124,7 +125,7 @@ async function splitBivSmallTRans(countTrans, smallI, bigI, account, token) {
       };
 
       if (smallI === 0) {
-        sRealizedFunc1(smallTObject);
+        sendSrealFunc1(smallTObject);
       }
       if (smallI === 1) {
         sRealizedFunc2(smallTObject);
@@ -144,26 +145,31 @@ async function splitBivSmallTRans(countTrans, smallI, bigI, account, token) {
 }
 
 async function bRealizedFunc1(largeTObject) {
-  console.log("i am big func 1", largeTObject);
+  //console.log("i am big func 1", largeTObject);
 }
 
 async function bRealizedFunc2(largeTObject) {
-  console.log("i am big func 2", largeTObject);
+  // console.log("i am big func 2", largeTObject);
 }
 async function bRealizedFunc3(largeTObject) {
-  console.log("i am big func 3", largeTObject);
+  //console.log("i am big func 3", largeTObject);
 }
 async function bRealizedFunc4(largeTObject) {
-  console.log("i am big func 4", largeTObject);
+  // console.log("i am big func 4", largeTObject);
 }
 async function bRealizedFunc5(largeTObject) {
-  console.log("i am big func 5", largeTObject);
+  // console.log("i am big func 5", largeTObject);
 }
 
-async function sRealizedFunc1(smallTObject) {
-  console.log("i am small func 1", smallTObject.account, smallTObject.token);
-
-  let createFifoJson = await prisma.sPL.findMany({
+async function sendSrealFunc1(smallTObject) {
+  /* 
+ in order to find all the fifo lines
+ that need to be calculated for the account/ token
+ combinations we first need the id from the SPL table
+ this id can be used to find the id's on the FIFO table
+ because that connection was created already 
+*/
+  let createLevelFifoJson = await prisma.sPL.findMany({
     orderBy: {
       id: "asc",
     },
@@ -176,117 +182,53 @@ async function sRealizedFunc1(smallTObject) {
     },
   });
 
-  console.log(createFifoJson);
-  //       // i used in for loop below
-  //       let i = 0;
-  //       for (let uniqueID of createFifoJson) {
-  //         /*
-  //               Creates a JSON to store the Original
-  //               values of a Buy to be used by FIFO
-  //             */
-  //         let jsonUpdateCol = [
-  //           {
-  //             id: uniqueID.id,
-  //             Token: uniqueID.Token,
-  //             Amount: uniqueID.Amount,
-  //             Original_Amount: uniqueID.Amount,
-  //             Remaining_Amount: uniqueID.Amount,
-  //             Created_Date: uniqueID.Created_Date,
-  //             Account: uniqueID.Account,
-  //             Original_Price: uniqueID.Price,
-  //             Price: uniqueID.Price,
-  //             inUSD: uniqueID.inUSD,
-  //             Buy_or_Sell: uniqueID.Buy_or_Sell,
-  //             Original_Type: uniqueID.Buy_or_Sell,
-  //             Internal_or_External: uniqueID.Internal_or_External,
-  //           },
-  //         ] as unknown as Prisma.JsonObject;
-  //         let getZeroArray = jsonUpdateCol[0];
-  //         /*
-  //               create an array to use as filter later
-  //               in this function to loop through
-  //             */
-  //         if (i === 0) {
-  //           createdIdArrayFirstFifoLevel.push(uniqueID.id);
-  //           /*
-  //                   Fifo must always start
-  //                   at the very first transaction
-  //                   and roll from there, in theroy
-  //                   that transaction would always be
-  //                   a buy
-  //                 */
-  //           await prisma.fifo.upsert({
-  //             where: {
-  //               id: uniqueID.id,
-  //             },
-  //             update: {
-  //               Fifo: getZeroArray,
-  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
-  //               LevelFifo: getZeroArray,
-  //               SPL: {
-  //                 connect: {
-  //                   id: uniqueID.id,
-  //                 },
-  //               },
-  //             },
-  //             create: {
-  //               Fifo: getZeroArray,
-  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
-  //               LevelFifo: getZeroArray,
-  //               SPL: {
-  //                 connect: {
-  //                   id: uniqueID.id,
-  //                 },
-  //               },
-  //             },
-  //           });
-  //           i++;
-  //         }
-  //         /*
-  //               Create or update the
-  //               Fifo column which just stores a
-  //               frozen value
-  //             */
-  //         if (i != 0) {
-  //           await prisma.fifo.upsert({
-  //             where: {
-  //               id: uniqueID.id,
-  //             },
-  //             update: {
-  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
-  //               Fifo: getZeroArray,
-  //               SPL: {
-  //                 connect: {
-  //                   id: uniqueID.id,
-  //                 },
-  //               },
-  //             },
-  //             create: {
-  //               Buy_or_Sell: uniqueID.Buy_or_Sell,
-  //               Fifo: getZeroArray,
-  //               SPL: {
-  //                 connect: {
-  //                   id: uniqueID.id,
-  //                 },
-  //               },
-  //             },
-  //           });
-  //         }
-  //       }
+  // push all those id's into an array
+  let idArray = [];
+  for (let uniqueID of createLevelFifoJson) {
+    idArray.push(uniqueID.id);
+  }
+
+  let firstId = idArray.shift();
+
+  let findFirstFifo = await prisma.fifo.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    where: {
+      sPLId: {
+        in: firstId,
+      },
+    },
+    //take: 1,
+  });
+
+  let findAllFifobyType = await prisma.fifo.findMany({
+    orderBy: {
+      id: "asc",
+    },
+    where: {
+      sPLId: {
+        in: idArray,
+      },
+    },
+    take: 1,
+  });
+
+  smallRealizedBatch1(findAllFifobyType, findFirstFifo);
 }
 
 async function sRealizedFunc2(smallTObject) {
-  console.log("i am small func 2", smallTObject);
+  //console.log("i am small func 2", smallTObject);
 }
 
 async function sRealizedFunc3(smallTObject) {
-  console.log("i am small func 3", smallTObject);
+  // console.log("i am small func 3", smallTObject);
 }
 
 async function sRealizedFunc4(smallTObject) {
-  console.log("i am small func 4", smallTObject);
+  // console.log("i am small func 4", smallTObject);
 }
 
 async function sRealizedFunc5(smallTObject) {
-  console.log("i am small func 5", smallTObject);
+  // console.log("i am small func 5", smallTObject);
 }
